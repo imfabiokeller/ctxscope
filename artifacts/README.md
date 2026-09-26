@@ -24,7 +24,7 @@ Every picture comes in `-light` and `-dark`.
 | `empty` | No session focused |
 | `connect-*` | The Connect panel: off, on, moved to another port, a file changed while it was open, a file it will not touch |
 | `popover-*` | The menu bar popover at both window sizes, the two shortest sessions, and nothing focused |
-| `status-<state>-<bar>-bar-<scale>` | The menu bar item: `focused`, `idle` or `none`, on a `light` or `dark` bar, at `1x` or `2x`, magnified without smoothing |
+| `status-<state>-<bar>-bar-<scale>` | The menu bar item: `focused`, `cachebreak`, `idle` or `none`, on a `light` or `dark` bar, at `1x` or `2x`, magnified without smoothing |
 
 ## The samples
 

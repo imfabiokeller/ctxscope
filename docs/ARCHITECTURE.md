@@ -227,11 +227,13 @@ treats as a non-blocking error.
 
 ## Menu bar item and panel
 
-The status item is a mark of three bars plus the context size ("143k"), in
-the system menu bar font with tabular digits, always a template image so it
-follows the bar's own appearance. Filled with a session in focus, dimmed
-without a number while that session is idle, outlined when nothing is in
-focus. It has an accessibility name and value in every state. One short
+The status item is a 16 pt glyph plus the context size ("143k"), in the
+system menu bar font with tabular digits, always a template image so it
+follows the bar's own appearance. The glyph is a track filled up to the
+window's fill, with a cursor at the fill on half points (`StatusGlyph`). A live
+session puts a dot on the cursor, a cache break on the newest request splits
+the cursor in two, and an idle session dims the whole glyph and drops the
+number. With nothing in focus it is the empty track, dimmed. It has an accessibility name and value in every state. One short
 cross-fade when the picture changes, none under Reduce Motion, nothing while
 idle.
 
