@@ -81,7 +81,7 @@ struct StatusItemTests {
     #expect(button.fades == 0)
   }
 
-  @Test("a live session is the filled mark and its size")
+  @Test("a live session is the live mark and its size")
   func liveSession() async throws {
     let (controller, model) = try await controller(live: true)
     let button = FakeButton()
@@ -91,7 +91,8 @@ struct StatusItemTests {
     #expect(button.image?.isTemplate == true)
     #expect(button.number.hasSuffix(TokenFormat.brief(reading.totalTokens)))
     #expect(button.tooltip == "ctxscope, \(StatusVoice.value(reading))")
-    #expect(button.value.hasSuffix("of \(TokenFormat.axis(reading.window))"))
+    #expect(button.value.contains("of \(TokenFormat.axis(reading.window))"))
+    #expect(button.value.hasSuffix("\(TokenFormat.percent(reading.fill)) full"))
   }
 
   @Test("an idle session has no number, and still says what it is")

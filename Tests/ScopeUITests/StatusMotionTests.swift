@@ -6,7 +6,10 @@ import Testing
 @Suite("when the item fades")
 struct StatusMotionTests {
   private func face(tokens: Int = 142_600, isLive: Bool = true) -> StatusFace {
-    StatusFace(reading: StatusReading(isLive: isLive, totalTokens: tokens, window: 200_000))
+    StatusFace(
+      reading: StatusReading(
+        isLive: isLive, totalTokens: tokens, window: 200_000, fill: Double(tokens) / 200_000,
+        breaksCache: false))
   }
 
   private func fades(

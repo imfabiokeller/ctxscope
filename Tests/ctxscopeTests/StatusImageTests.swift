@@ -10,9 +10,12 @@ import Testing
 struct StatusImageTests {
   private var ink: ThemeColor { ThemeLoader.pick(ThemeLoader.bundled(), for: .dark).text.primary }
 
-  private func face(isLive: Bool?) -> StatusFace {
+  private func face(isLive: Bool?, breaksCache: Bool = false) -> StatusFace {
     StatusFace(
-      reading: isLive.map { StatusReading(isLive: $0, totalTokens: 142_600, window: 200_000) })
+      reading: isLive.map {
+        StatusReading(
+          isLive: $0, totalTokens: 142_600, window: 200_000, fill: 0.713, breaksCache: breaksCache)
+      })
   }
 
   @Test("it carries a 1x and a 2x representation, measured in points")
@@ -46,12 +49,15 @@ struct StatusImageTests {
     }
   }
 
-  @Test("filled, dimmed and outlined are three different pictures")
+  @Test("live, cache break, idle and nothing in focus are four different pictures")
   func states() throws {
     let pixels = { (face: StatusFace) -> Data? in
       StatusImage.make(face, ink: self.ink, screen: nil)?.tiffRepresentation
     }
-    let drawn = [face(isLive: true), face(isLive: false), face(isLive: nil)].map(pixels)
-    #expect(Set(drawn.compactMap { $0 }).count == 3)
+    let faces = [
+      face(isLive: true), face(isLive: true, breaksCache: true), face(isLive: false),
+      face(isLive: nil),
+    ]
+    #expect(Set(faces.map(pixels).compactMap { $0 }).count == 4)
   }
 }

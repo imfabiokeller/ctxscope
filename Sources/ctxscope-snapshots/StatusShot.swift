@@ -16,12 +16,15 @@ enum StatusShot {
 
   static let states: [(name: String, face: StatusFace)] = [
     ("focused", StatusFace(reading: reading(isLive: true))),
+    ("cachebreak", StatusFace(reading: reading(isLive: true, breaksCache: true))),
     ("idle", StatusFace(reading: reading(isLive: false))),
     ("none", StatusFace(reading: nil)),
   ]
 
-  static func reading(isLive: Bool) -> StatusReading {
-    StatusReading(isLive: isLive, totalTokens: 142_600, window: 200_000)
+  static func reading(isLive: Bool, breaksCache: Bool = false) -> StatusReading {
+    StatusReading(
+      isLive: isLive, totalTokens: 142_600, window: 200_000, fill: 0.713,
+      breaksCache: breaksCache)
   }
 
   static func all(themes: [Theme]) -> [Shot] {

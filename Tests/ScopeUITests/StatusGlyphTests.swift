@@ -1,98 +1,116 @@
 import CoreGraphics
-import ScopeCore
 import Testing
 
 @testable import ScopeUI
 
 @Suite("the menu bar mark")
 struct StatusGlyphTests {
-  @Test("three bars, three points wide, rising, inside a 14 by 12 box")
-  func geometry() {
-    #expect(StatusGlyph.size == CGSize(width: 14, height: 12))
-    let bars = StatusGlyph.bars
-    #expect(bars.count == 3)
-    #expect(bars.allSatisfy { $0.width == 3 })
-    #expect(bars.map(\.height) == [4.5, 7.5, 11])
-    #expect(Set(bars.map(\.maxY)).count == 1)
-    let box = CGRect(origin: .zero, size: StatusGlyph.size)
-    for bar in bars {
-      #expect(box.contains(bar.insetBy(dx: -StatusGlyph.stroke / 2, dy: -StatusGlyph.stroke / 2)))
-    }
+  private typealias Part = StatusGlyph.Part
+
+  private func track() -> Part {
+    Part(rect: CGRect(x: 1, y: 5, width: 12, height: 6), cornerRadius: 1, alpha: 0.3)
   }
 
-  @Test("filled bars sit on whole pixels at every scale", arguments: [CGFloat(1), 2, 3])
-  func pixels(scale: CGFloat) {
-    for bar in StatusGlyph.filled(scale: scale) {
-      for edge in [bar.minX, bar.maxX, bar.minY, bar.maxY] {
-        #expect((edge * scale).rounded() == edge * scale)
+  private func slice(_ left: CGFloat, _ right: CGFloat) -> Part {
+    Part(rect: CGRect(x: left, y: 5, width: right - left, height: 6), cornerRadius: 0.5, alpha: 1)
+  }
+
+  private func bar(_ x: CGFloat, _ top: CGFloat, _ bottom: CGFloat) -> Part {
+    Part(
+      rect: CGRect(x: x, y: top, width: 1.5, height: bottom - top), cornerRadius: 0.75, alpha: 1)
+  }
+
+  @Test("a 16 point square with the track inside it")
+  func frame() {
+    #expect(StatusGlyph.size == CGSize(width: 16, height: 16))
+    let box = CGRect(origin: .zero, size: StatusGlyph.size)
+    for state in StatusGlyph.State.allCases {
+      for part in StatusGlyph.parts(fill: 1, state: state) {
+        #expect(box.contains(part.rect))
       }
     }
   }
 
-  @Test("at 2x the filled bars are the glyph's own")
-  func twoX() {
-    #expect(StatusGlyph.filled(scale: 2) == StatusGlyph.bars)
-  }
-}
-
-@Suite("the menu bar's face")
-struct StatusFaceTests {
-  @Test("a live session is the filled mark and its size")
-  func live() {
-    let face = StatusFace(
-      reading: StatusReading(isLive: true, totalTokens: 142_600, window: 200_000))
-    #expect(face == StatusFace(style: .filled, isDimmed: false, number: "143k"))
+  @Test("empty, the track and the cursor at its start")
+  func empty() {
+    #expect(StatusGlyph.parts(fill: 0, state: .normal) == [track(), bar(1, 2, 14)])
   }
 
-  @Test("an idle session is the same mark, dimmed, with no number")
-  func idle() {
-    let face = StatusFace(
-      reading: StatusReading(isLive: false, totalTokens: 142_600, window: 200_000))
-    #expect(face == StatusFace(style: .filled, isDimmed: true, number: nil))
+  @Test("at 0.44 the cursor snaps to 6.5 and the second slice stops half a point before it")
+  func fortyFour() {
+    #expect(
+      StatusGlyph.parts(fill: 0.44, state: .normal) == [
+        track(), slice(1, 3.5), slice(4, 6), bar(6.5, 2, 14),
+      ])
   }
 
-  @Test("no session in focus is the outline, at full ink, with no number")
-  func none() {
-    #expect(StatusFace(reading: nil) == StatusFace(style: .outlined, isDimmed: false, number: nil))
+  @Test("at half, two whole slices and the cursor at 7")
+  func half() {
+    #expect(
+      StatusGlyph.parts(fill: 0.5, state: .normal) == [
+        track(), slice(1, 3.5), slice(4, 6.5), bar(7, 2, 14),
+      ])
   }
-}
 
-@Suite("what the menu bar reads")
-@MainActor
-struct StatusReadingTests {
-  private func model(focus: Bool) async -> InstrumentModel {
-    let recording = SyntheticRecording.make()
-    let model = InstrumentModel(feed: RecordingFeed(recordings: [recording]))
-    model.reloadSessions()
-    await model.settle()
-    if focus {
-      model.focus(session: recording.sessionID)
-      await model.settle()
+  @Test("full, every slice and the cursor at the track's end")
+  func full() {
+    #expect(
+      StatusGlyph.parts(fill: 1, state: .normal) == [
+        track(), slice(1, 3.5), slice(4, 6.5), slice(7, 11), slice(11.5, 12.5), bar(13, 2, 14),
+      ])
+  }
+
+  @Test("the kit's half and full pictures are fills of 6.5 and 10.5 twelfths")
+  func kit() {
+    #expect(
+      StatusGlyph.parts(fill: 6.5 / 12, state: .normal) == [
+        track(), slice(1, 3.5), slice(4, 6.5), bar(7.5, 2, 14),
+      ])
+    #expect(
+      StatusGlyph.parts(fill: 10.5 / 12, state: .normal) == [
+        track(), slice(1, 3.5), slice(4, 6.5), slice(7, 11), bar(11.5, 2, 14),
+      ])
+  }
+
+  @Test("the fill snaps to half points and stays inside 0 to 1")
+  func snapping() {
+    #expect(StatusGlyph.end(fill: 0.02) == 1)
+    #expect(StatusGlyph.end(fill: 0.03) == 1.5)
+    #expect(StatusGlyph.end(fill: -1) == 1)
+    #expect(StatusGlyph.end(fill: 2) == 13)
+    #expect(StatusGlyph.snapped(0.713) == 17.0 / 24)
+    for step in 0...1000 {
+      let fill = Double(step) / 1000
+      #expect(StatusGlyph.snapped(StatusGlyph.snapped(fill)) == StatusGlyph.snapped(fill))
+      for part in StatusGlyph.parts(fill: fill, state: .live) {
+        for edge in [part.rect.minX, part.rect.maxX, part.rect.minY, part.rect.maxY] {
+          #expect((edge * 4).rounded() == edge * 4)
+        }
+      }
     }
-    return model
   }
 
-  @Test("a session in focus reads as its size against its window")
-  func focused() async throws {
-    let model = await model(focus: true)
-    let reading = try #require(StatusReading.make(from: model))
-    let analysis = try #require(model.analysis)
-    #expect(reading.totalTokens == analysis.tally(at: analysis.lastRequest)?.total.value)
-    #expect(reading.window == analysis.lane.window.tokens)
-    #expect(reading.totalTokens > 0)
+  @Test("live puts a 3.5 point dot on a shorter cursor")
+  func live() {
+    let parts = StatusGlyph.parts(fill: 0.5, state: .live)
+    let dot = Part(rect: CGRect(x: 6, y: 1, width: 3.5, height: 3.5), cornerRadius: 1.75, alpha: 1)
+    #expect(parts.suffix(2) == [bar(7, 3.5, 14), dot])
+    #expect(parts.dropLast(2) == StatusGlyph.parts(fill: 0.5, state: .normal).dropLast())
+    #expect(StatusGlyph.opacity(.live) == 1)
   }
 
-  @Test("no session in focus reads as nothing")
-  func none() async throws {
-    let model = await model(focus: false)
-    #expect(StatusReading.make(from: model) == nil)
+  @Test("a cache break splits the cursor into two stubs")
+  func cacheBreak() {
+    let parts = StatusGlyph.parts(fill: 0.5, state: .cacheBreak)
+    #expect(parts.suffix(2) == [bar(7, 1, 4), bar(7, 12, 15)])
+    #expect(StatusGlyph.opacity(.cacheBreak) == 1)
   }
 
-  @Test("an idle session still reads, and says it is idle")
-  func idle() async throws {
-    let model = await model(focus: true)
-    model.liveness.clear()
-    let reading = try #require(StatusReading.make(from: model))
-    #expect(!reading.isLive)
+  @Test("idle is the normal picture at 35 percent")
+  func idle() {
+    #expect(
+      StatusGlyph.parts(fill: 0.5, state: .idle) == StatusGlyph.parts(fill: 0.5, state: .normal))
+    #expect(StatusGlyph.opacity(.idle) == 0.35)
+    #expect(StatusGlyph.opacity(.normal) == 1)
   }
 }

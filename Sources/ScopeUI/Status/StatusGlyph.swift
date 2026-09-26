@@ -1,23 +1,78 @@
 public import CoreGraphics
 
 public enum StatusGlyph {
-  public static let size = CGSize(width: 14, height: 12)
-  public static let cornerRadius: CGFloat = 0.6
-  public static let stroke: CGFloat = 1
+  public enum State: Sendable, Equatable, CaseIterable {
+    case normal
+    case live
+    case cacheBreak
+    case idle
+  }
 
-  public static let bars: [CGRect] = [
-    CGRect(x: 0.5, y: 7, width: 3, height: 4.5),
-    CGRect(x: 5.5, y: 4, width: 3, height: 7.5),
-    CGRect(x: 10.5, y: 0.5, width: 3, height: 11),
+  public struct Part: Sendable, Equatable {
+    public let rect: CGRect
+    public let cornerRadius: CGFloat
+    public let alpha: Double
+  }
+
+  public static let size = CGSize(width: 16, height: 16)
+  public static let track = CGRect(x: 1, y: 5, width: 12, height: 6)
+  public static let trackAlpha = 0.3
+  public static let idleOpacity = 0.35
+  public static let cursorWidth: CGFloat = 1.5
+  public static let slices: [(left: CGFloat, right: CGFloat)] = [
+    (1, 3.5), (4, 6.5), (7, 11), (11.5, 13),
   ]
 
-  public static func filled(scale: CGFloat) -> [CGRect] {
-    let scale = max(1, scale)
-    let snap = { (value: CGFloat) in (value * scale).rounded() / scale }
-    return bars.map { bar in
-      let left = snap(bar.minX)
-      let top = snap(bar.minY)
-      return CGRect(x: left, y: top, width: snap(bar.maxX) - left, height: snap(bar.maxY) - top)
+  static let steps = 2 * track.width
+  static let sliceGap: CGFloat = 0.5
+  static let dot: CGFloat = 3.5
+
+  static func step(_ fill: Double) -> CGFloat {
+    (min(max(fill, 0), 1) * steps).rounded()
+  }
+
+  public static func snapped(_ fill: Double) -> Double {
+    step(fill) / steps
+  }
+
+  public static func end(fill: Double) -> CGFloat {
+    track.minX + step(fill) / 2
+  }
+
+  public static func opacity(_ state: State) -> Double {
+    state == .idle ? idleOpacity : 1
+  }
+
+  public static func parts(fill: Double, state: State) -> [Part] {
+    let end = end(fill: fill)
+    var parts = [Part(rect: track, cornerRadius: 1, alpha: trackAlpha)]
+    for slice in slices {
+      let right = min(slice.right, end - sliceGap)
+      guard right - slice.left >= sliceGap else { continue }
+      parts.append(
+        Part(
+          rect: CGRect(
+            x: slice.left, y: track.minY, width: right - slice.left, height: track.height),
+          cornerRadius: 0.5, alpha: 1))
+    }
+    return parts + cursor(at: min(end, track.maxX), state: state)
+  }
+
+  static func cursor(at x: CGFloat, state: State) -> [Part] {
+    let bar = { (top: CGFloat, bottom: CGFloat) in
+      Part(
+        rect: CGRect(x: x, y: top, width: cursorWidth, height: bottom - top),
+        cornerRadius: cursorWidth / 2, alpha: 1)
+    }
+    switch state {
+    case .live:
+      let center = x + cursorWidth / 2
+      let cap = CGRect(x: center - dot / 2, y: 1, width: dot, height: dot)
+      return [bar(3.5, 14), Part(rect: cap, cornerRadius: dot / 2, alpha: 1)]
+    case .cacheBreak:
+      return [bar(1, 4), bar(12, 15)]
+    case .normal, .idle:
+      return [bar(2, 14)]
     }
   }
 }
