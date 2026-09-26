@@ -2,16 +2,12 @@ import Foundation
 import ScopeUI
 import SwiftUI
 
-/// The sample shots: the component gallery and the window's pages filled
-/// with made-up values chosen to read well, in both appearances. Beside them,
-/// the same pages over the synthetic recording, drawn by the real presenters.
 @MainActor
 enum SampleShot {
   struct Picture {
     let name: String
     let size: CGSize
-    /// Built once per picture, so a shot over a model starts from a model
-    /// nobody has moved or selected anything in.
+    // A closure, so each picture starts from a model nobody has moved or selected in.
     let view: @MainActor () async -> AnyView
 
     init(name: String, size: CGSize, view: @escaping @MainActor () async -> AnyView) {
@@ -20,7 +16,6 @@ enum SampleShot {
       self.view = view
     }
 
-    /// A picture of a view that needs nothing built first.
     init(name: String, size: CGSize, view: @autoclosure @escaping @MainActor () -> AnyView) {
       self.init(name: name, size: size) { view() }
     }
@@ -31,13 +26,10 @@ enum SampleShot {
   private static let pages: [Picture] = [
     Picture(name: "components", size: ComponentGallery.size) { AnyView(ComponentGallery()) },
     Picture(name: "context", size: Metrics.standard.window.size) { AnyView(ContextSample()) },
-    // The window over the synthetic 200k recording, through the model.
     Picture(name: "context-synthetic", size: Metrics.standard.window.size) {
       let model = await Shot.make(.small, withText: true)
       return AnyView(WindowFrame { InstrumentView(model: model) })
     },
-    // The strip's magnifier open over the page, a block a third of the way
-    // along: it has to cover the legend and the table under it, whole.
     Picture(name: "context-magnifier", size: Metrics.standard.window.size) {
       let model = await Shot.make(.small, withText: true)
       let count = model.figures?.column.slices.count ?? 0
@@ -52,16 +44,11 @@ enum SampleShot {
     Picture(name: "timeline-synthetic", size: Metrics.standard.window.size) {
       AnyView(TimelineShot(data: TimelineSynthetic.data()))
     },
-    // The same page as the window shows it, through the model: a block
-    // shown in the timeline selects the prompt it entered in.
     Picture(name: "timeline-window-synthetic", size: Metrics.standard.window.size) {
       let model = await Shot.make(.small, withText: true)
       if let block = model.selection { model.showInTimeline(block: block) }
       return AnyView(WindowFrame { InstrumentView(model: model) })
     },
-    // The magnifier open over the page near the plot's right end, where it
-    // turns to the pointer's left: above the cost bars, the axis and the
-    // table, whole.
     Picture(name: "timeline-hover", size: Metrics.standard.window.size) {
       let data = TimelineSynthetic.data()
       let column = data.chart.columns.count - 4
@@ -71,15 +58,11 @@ enum SampleShot {
           hover: ColumnHover(
             column: column, slice: data.chart.columns[column].slices.count / 2, x: 950)))
     },
-    // The magnifier a hovered column shows, which no still picture of the
-    // page can: request 60 of the synthetic lane, a block half way up.
     Picture(name: "timeline-magnifier", size: CGSize(width: 380, height: 480)) {
       AnyView(MagnifierShot(chart: TimelineSynthetic.data().chart))
     },
   ]
 
-  /// Writes every shot in every theme to `<output>/samples`, and returns the
-  /// names of the files written.
   static func run(output: URL) async -> [String] {
     let folder = output.appending(path: "samples")
     try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -103,7 +86,6 @@ enum SampleShot {
   }
 }
 
-/// The header filled with the sample session, on either page.
 private struct SampleHeader<Trailing: View>: View {
   let page: WindowPage
   @ViewBuilder let trailing: () -> Trailing
@@ -119,8 +101,6 @@ private struct SampleHeader<Trailing: View>: View {
   }
 }
 
-/// The whole window on the Context page, with the sample header and the
-/// page's two columns under it.
 struct ContextWindow<Main: View, Sidebar: View>: View {
   let main: Main
   let sidebar: Sidebar
@@ -145,7 +125,6 @@ struct ContextWindow<Main: View, Sidebar: View>: View {
   }
 }
 
-/// The whole window on the Timeline page.
 private struct TimelineShot: View {
   let data: TimelineData
   var hover: ColumnHover?
@@ -162,7 +141,6 @@ private struct TimelineShot: View {
   }
 }
 
-/// The magnifier on its own, over the window's background.
 private struct MagnifierShot: View {
   let chart: TimelineChart
   @Environment(\.theme) private var theme

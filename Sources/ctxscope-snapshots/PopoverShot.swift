@@ -3,14 +3,9 @@ import ScopeCore
 import ScopeUI
 import SwiftUI
 
-/// The popover filled with sample values, focused on a session and with
-/// nothing in focus.
-///
-/// A shot is the panel's own box, border included, with the desktop behind
-/// its corners and its shadow drawn where it falls inside that box.
 @MainActor
 enum PopoverShot {
-  /// The panel's height with these values, in points.
+  // Measured panel heights for these sample values.
   static let focusedHeight: CGFloat = 450.5
   static let emptyHeight: CGFloat = 333.5
 
@@ -26,7 +21,6 @@ enum PopoverShot {
     ]
   }
 
-  /// The sample session.
   static let focused = FocusedPopover(
     title: "retry-policy", lane: "main lane", isLive: true,
     meta: "~/code/api-client · request 87 · 12 s ago",
@@ -48,9 +42,6 @@ enum PopoverShot {
       ago: "23 requests ago", line: "Request 64 · tool definitions changed", extra: "+$0.39"),
     sparkRange: "1 \u{2192} 87", spark: spark, others: [])
 
-  /// The sample chart: a formula for the context of each of 87 requests,
-  /// with breaks at requests 23, 42 and 64, and heights rounded to a tenth
-  /// of a point.
   static var spark: [SparkBar] {
     let ends = [5, 14, 22, 30, 41, 54, 63, 75, 87]
     return (1...87).map { request in
@@ -79,7 +70,6 @@ enum PopoverShot {
     ])
 }
 
-/// The panel at the top of its box, on the desktop.
 struct OnDesktop<Content: View>: View {
   let content: Content
   @Environment(\.theme) private var theme
@@ -89,8 +79,7 @@ struct OnDesktop<Content: View>: View {
   }
 
   var body: some View {
-    // An overlay, so a panel taller than the box still starts at its top
-    // rather than being centered on it.
+    // An overlay, so a panel taller than the box starts at its top instead of centered.
     theme.chrome.desktop.color
       .overlay(alignment: .top) { content }
       .clipped()

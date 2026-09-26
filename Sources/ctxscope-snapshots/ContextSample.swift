@@ -3,8 +3,6 @@ import ScopeCore
 import ScopeUI
 import SwiftUI
 
-/// The Context page filled with sample values: four cards, a strip, twelve
-/// rows and "Bash · npm test (full output)" selected with its text.
 struct ContextSample: View {
   var body: some View {
     ContextWindow {
@@ -18,8 +16,7 @@ struct ContextSample: View {
     }
   }
 
-  /// The sample's sizes are fractional, so the strip is drawn in
-  /// thousandths of a token to place every slice exactly.
+  // Thousandths of a token, so the fractional sample sizes place every slice exactly.
   private static let unit = 1000
 
   static let data = ContextPageData(
@@ -66,8 +63,10 @@ struct ContextSample: View {
       copyTitle: "Copy text"),
     noSelection: ContextPresenter.noSelection)
 
-  /// The sample blocks: kind, label, tokens, requests carried, used.
-  private static let blocks: [(Kind, String, Int, Int, Bool?)] = [
+  private typealias SampleBlock = (
+    kind: Kind, label: String, tokens: Int, requestsCarried: Int, used: Bool?
+  )
+  private static let blocks: [SampleBlock] = [
     (.results, "Bash · npm test (full output)", 14_236, 32, false),
     (.results, "Read · src/api/client.ts", 12_380, 31, true),
     (.tools, "GitHub MCP · 26 tool definitions", 9804, 24, nil),
@@ -82,8 +81,6 @@ struct ContextSample: View {
     (.system, "System prompt", 3100, 87, nil),
   ]
 
-  /// The rows as the table writes them: one decimal, a tilde, two places of
-  /// dollars at 0.3 dollars per million tokens per request.
   static let rows: [BlockRowData] = blocks.enumerated().map { index, block in
     let (kind, label, tokens, carried, used) = block
     return BlockRowData(
@@ -94,8 +91,6 @@ struct ContextSample: View {
       cost: TokenFormat.cents(Double(tokens * carried) * 0.3e-6))
   }
 
-  /// The sample strip: the prefix, then per task a prompt and three rounds of
-  /// agent and results.
   private static let slices: [StripSlice] = {
     let phases = [
       (1, 5), (6, 14), (15, 22), (23, 30), (31, 41), (42, 54), (55, 63), (64, 75), (76, 87),
@@ -123,8 +118,7 @@ struct ContextSample: View {
     }
   }()
 
-  /// Where the selected block sits: after the prefix, at the conversation's
-  /// size before request 56.
+  // Zero-based: request 55 here is request 56 on the page.
   private static let selected: Range<Int> = {
     let phases = [5, 14, 22, 30, 41, 54, 63, 75, 87]
     let request = 55.0

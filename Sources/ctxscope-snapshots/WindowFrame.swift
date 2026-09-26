@@ -1,11 +1,7 @@
 import ScopeUI
 import SwiftUI
 
-/// The window as it appears on screen: rounded, bordered, with the traffic
-/// lights at the header's leading edge.
-///
-/// In the app the system draws all of this, so it lives here and not in
-/// ScopeUI. A snapshot draws it so the picture looks like the window.
+// The system draws the window frame in the app, so it lives here and not in ScopeUI.
 struct WindowFrame<Content: View>: View {
   let content: Content
   @Environment(\.theme) private var theme
@@ -17,8 +13,6 @@ struct WindowFrame<Content: View>: View {
   var body: some View {
     let window = theme.metrics.window
     let hairline = theme.metrics.hairline
-    // The border is inside the frame, and the content is clipped to the
-    // inside of the border, the way the window's is.
     content
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .clipShape(RoundedRectangle(cornerRadius: window.cornerRadius - hairline))
@@ -36,8 +30,6 @@ struct WindowFrame<Content: View>: View {
   }
 }
 
-/// Close, minimize and zoom, where the system puts them: in the header's
-/// reserved space, centered on its height.
 private struct TrafficLights: View {
   @Environment(\.theme) private var theme
 

@@ -1,11 +1,8 @@
 import ScopeUI
 import SwiftUI
 
-/// Every component in the states it has, on one page, in both appearances,
-/// so a component can be looked at without the page it lives on.
 struct ComponentGallery: View {
   static let size = CGSize(width: 1440, height: 1180)
-  /// The left column, which holds the controls.
   private static let controlsWidth: CGFloat = 620
 
   @Environment(\.theme) private var theme
@@ -31,7 +28,6 @@ struct ComponentGallery: View {
   }
 }
 
-/// A labeled group in the gallery.
 struct GallerySection<Content: View>: View {
   let title: String
   let content: Content
@@ -50,12 +46,10 @@ struct GallerySection<Content: View>: View {
   }
 }
 
-/// A component's state, named beside it.
 struct GalleryRow<Content: View>: View {
   let label: String
   let content: Content
   @Environment(\.theme) private var theme
-  /// The gallery's own column of names, which no page of the app has.
   private static var labelWidth: CGFloat { 130 }
 
   init(_ label: String, @ViewBuilder content: () -> Content) {

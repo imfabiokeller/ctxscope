@@ -4,14 +4,10 @@ import ScopeCore
 import ScopeUI
 import SwiftUI
 
-/// Renders every main view to a PNG, in both themes, at 200k and at 1M scale.
-/// It runs from a command line with no window server session and no screen
-/// capture permission, so anyone can make the pictures, CI included.
 @MainActor
 func run() async {
   let output = URL(fileURLWithPath: Arguments.value("out") ?? "artifacts")
   try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-  // The sample shots alone: the gallery and the pages with sample values.
   if Arguments.flag("samples") {
     let written = await SampleShot.run(output: output)
     print(written.joined(separator: "\n"))
@@ -21,9 +17,7 @@ func run() async {
   let themes = ThemeLoader.bundled()
   var written: [String] = []
 
-  // One real session, for looking at a window nobody could shape by hand.
-  // Never into the repository: a render of a real session is transcript
-  // content in a picture.
+  // Never render into the repository: a picture of a real session is transcript content.
   if let id = Arguments.value("session") {
     guard let model = await Shot.session(id) else {
       FileHandle.standardError.write(Data("no session \(id)\n".utf8))
@@ -32,13 +26,10 @@ func run() async {
     let pages = Arguments.value("page").map { [WindowPage(argument: $0)].compactMap(\.self) }
     for page in pages ?? WindowPage.allCases {
       model.page = page
-      // The timeline with the selected block's prompt picked, so its detail
-      // is in the picture too.
       if page == .timeline, let block = model.selection { model.showInTimeline(block: block) }
       for theme in themes {
         let name = "session-\(page.argument)-\(theme.name)"
-        // Laid out the way a window lays it out, scroll views included,
-        // which is the path the app takes and the renderer's is not.
+        // Hosted, so scroll views lay out the way the app lays them out.
         guard
           let url = await Renderer.writeHosted(
             InstrumentView(model: model).environment(\.theme, theme),
@@ -51,7 +42,6 @@ func run() async {
     return
   }
 
-  // The menu bar item, on both bar backgrounds, in every state and step.
   for shot in StatusShot.all(themes: themes) {
     guard
       let url = Renderer.write(
@@ -79,8 +69,6 @@ func run() async {
     }
   }
 
-  // The Connect panel, in each state a person can meet it in. Built against
-  // settings files made for the pictures, never the real home.
   if let connect = await ConnectShot.all() {
     for shot in connect.shots {
       for theme in themes {

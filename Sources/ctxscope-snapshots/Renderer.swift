@@ -2,14 +2,10 @@ import AppKit
 import Foundation
 import SwiftUI
 
-/// Renders a view to a PNG without a window.
-///
-/// The files have to be producible from a command line: no window server
-/// session, no screen capture permission, no app running.
+// Must run from a command line: no window server session, no screen capture permission.
 @MainActor
 enum Renderer {
-  /// Rendered at two device pixels per point, which is what the display these
-  /// are checked on shows.
+  // Two pixels per point, as on the display the pictures are checked on.
   static let scale: CGFloat = 2
 
   static func write(_ view: some View, size: CGSize, to url: URL) -> URL? {
@@ -23,10 +19,7 @@ enum Renderer {
     return url
   }
 
-  /// Renders a view the way a window lays it out, scroll views and all, by
-  /// hosting it in a window that is never shown and drawing its layer. What
-  /// a window draws off the main actor, such as the timeline's columns, is
-  /// given time to arrive.
+  // The wait gives what a window draws off the main actor (the timeline's columns) time to arrive.
   static func writeHosted(_ view: some View, size: CGSize, to url: URL) async -> URL? {
     let host = NSHostingView(rootView: view.frame(width: size.width, height: size.height))
     host.frame = CGRect(origin: .zero, size: size)
@@ -44,7 +37,6 @@ enum Renderer {
   }
 }
 
-/// The few flags the renderer takes.
 enum Arguments {
   static func value(_ name: String) -> String? {
     let flag = "--\(name)"
@@ -55,7 +47,6 @@ enum Arguments {
     return arguments[slot + 1]
   }
 
-  /// Whether a flag that takes no value was given.
   static func flag(_ name: String) -> Bool {
     CommandLine.arguments.contains("--\(name)")
   }

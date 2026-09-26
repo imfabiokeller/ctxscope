@@ -1,8 +1,6 @@
 import ScopeUI
 import SwiftUI
 
-/// The gallery's larger components, filled with sample rows.
-
 struct SurfacesSection: View {
   @Environment(\.theme) private var theme
 
@@ -205,7 +203,6 @@ struct ListsSection: View {
     }
   }
 
-  /// A figure in the strong weight with its cost beside it, quieter.
   private struct Fact: Identifiable {
     let id: String
     let value: String
@@ -213,7 +210,6 @@ struct ListsSection: View {
     let wide: Bool
   }
 
-  /// A prompt's facts: four tiles two to a row, and a wide one.
   private static let facts = [
     Fact(id: "Context", value: "+14.0k", detail: "81.7k → 95.7k", wide: false),
     Fact(id: "Cost", value: "$0.37", detail: "9 requests", wide: false),

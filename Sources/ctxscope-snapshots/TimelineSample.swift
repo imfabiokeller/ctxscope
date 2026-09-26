@@ -2,15 +2,11 @@ import Foundation
 import ScopeCore
 import ScopeUI
 
-/// The Timeline page filled with sample values: 87 bars of six parts each,
-/// costs scaled to $3.94, prompt 7 selected, and three cache break cards.
-///
-/// Each kind's part is split into a few blocks, because the page draws every
-/// block as its own slice, with a rule between two.
 enum TimelineSample {
-  /// First and last request, what was typed, and the largest addition
-  /// with its size.
-  private static let prompts: [(Int, Int, String, String, String)] = [
+  private typealias SamplePrompt = (
+    first: Int, last: Int, typed: String, largestAddition: String, additionSize: String
+  )
+  private static let prompts: [SamplePrompt] = [
     (1, 5, "Read the API client and map how retries work", "Read · src/api/client.ts", "12.4k"),
     (6, 14, "Refactor retries into a single policy object", "Read · src/api/transport.ts", "5.2k"),
     (15, 22, "Run the tests and fix the failures", "Read · src/api/retry.ts", "8.1k"),
@@ -24,7 +20,6 @@ enum TimelineSample {
   private static let breakAt = [23: 1, 42: 2, 64: 3]
   private static let requests = 87
   private static let selected = 6
-  /// How each kind's part is split into blocks, bottom first.
   private static let split = [0.5, 0.3, 0.2]
 
   static func data() -> TimelineData {
@@ -49,7 +44,6 @@ enum TimelineSample {
       detail: detail(rows[selected], context: context, costs: costs))
   }
 
-  /// The six parts of one request, in reading order.
   private static func parts(at request: Int) -> [Double] {
     let share = Double(request) / Double(requests)
     let jitter = Double((request * 37) % 11) / 11
@@ -156,7 +150,6 @@ enum TimelineSample {
         + "Everything after the tools was sent uncached."),
   ]
 
-  /// "12.3k": thousands to one place.
   private static func thousands(_ value: Double) -> String {
     String(format: "%.1fk", value / 1000)
   }
