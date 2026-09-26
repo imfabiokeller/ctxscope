@@ -2,7 +2,6 @@ public import CoreGraphics
 
 public enum StatusGlyph {
   public enum State: Sendable, Equatable, CaseIterable {
-    case normal
     case live
     case cacheBreak
     case idle
@@ -71,7 +70,7 @@ public enum StatusGlyph {
       return [bar(3.5, 14), Part(rect: cap, cornerRadius: dot / 2, alpha: 1)]
     case .cacheBreak:
       return [bar(1, 4), bar(12, 15)]
-    case .normal, .idle:
+    case .idle:
       return [bar(2, 14)]
     }
   }

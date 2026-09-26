@@ -33,13 +33,13 @@ struct StatusGlyphTests {
 
   @Test("empty, the track and the cursor at its start")
   func empty() {
-    #expect(StatusGlyph.parts(fill: 0, state: .normal) == [track(), bar(1, 2, 14)])
+    #expect(StatusGlyph.parts(fill: 0, state: .idle) == [track(), bar(1, 2, 14)])
   }
 
   @Test("at 0.44 the cursor snaps to 6.5 and the second slice stops half a point before it")
   func fortyFour() {
     #expect(
-      StatusGlyph.parts(fill: 0.44, state: .normal) == [
+      StatusGlyph.parts(fill: 0.44, state: .idle) == [
         track(), slice(1, 3.5), slice(4, 6), bar(6.5, 2, 14),
       ])
   }
@@ -47,7 +47,7 @@ struct StatusGlyphTests {
   @Test("at half, two whole slices and the cursor at 7")
   func half() {
     #expect(
-      StatusGlyph.parts(fill: 0.5, state: .normal) == [
+      StatusGlyph.parts(fill: 0.5, state: .idle) == [
         track(), slice(1, 3.5), slice(4, 6.5), bar(7, 2, 14),
       ])
   }
@@ -55,7 +55,7 @@ struct StatusGlyphTests {
   @Test("full, every slice and the cursor at the track's end")
   func full() {
     #expect(
-      StatusGlyph.parts(fill: 1, state: .normal) == [
+      StatusGlyph.parts(fill: 1, state: .idle) == [
         track(), slice(1, 3.5), slice(4, 6.5), slice(7, 11), slice(11.5, 12.5), bar(13, 2, 14),
       ])
   }
@@ -63,11 +63,11 @@ struct StatusGlyphTests {
   @Test("the kit's half and full pictures are fills of 6.5 and 10.5 twelfths")
   func kit() {
     #expect(
-      StatusGlyph.parts(fill: 6.5 / 12, state: .normal) == [
+      StatusGlyph.parts(fill: 6.5 / 12, state: .idle) == [
         track(), slice(1, 3.5), slice(4, 6.5), bar(7.5, 2, 14),
       ])
     #expect(
-      StatusGlyph.parts(fill: 10.5 / 12, state: .normal) == [
+      StatusGlyph.parts(fill: 10.5 / 12, state: .idle) == [
         track(), slice(1, 3.5), slice(4, 6.5), slice(7, 11), bar(11.5, 2, 14),
       ])
   }
@@ -95,7 +95,7 @@ struct StatusGlyphTests {
     let parts = StatusGlyph.parts(fill: 0.5, state: .live)
     let dot = Part(rect: CGRect(x: 6, y: 1, width: 3.5, height: 3.5), cornerRadius: 1.75, alpha: 1)
     #expect(parts.suffix(2) == [bar(7, 3.5, 14), dot])
-    #expect(parts.dropLast(2) == StatusGlyph.parts(fill: 0.5, state: .normal).dropLast())
+    #expect(parts.dropLast(2) == StatusGlyph.parts(fill: 0.5, state: .idle).dropLast())
     #expect(StatusGlyph.opacity(.live) == 1)
   }
 
@@ -106,11 +106,9 @@ struct StatusGlyphTests {
     #expect(StatusGlyph.opacity(.cacheBreak) == 1)
   }
 
-  @Test("idle is the normal picture at 35 percent")
+  @Test("idle is drawn at 35 percent, the other states in full")
   func idle() {
-    #expect(
-      StatusGlyph.parts(fill: 0.5, state: .idle) == StatusGlyph.parts(fill: 0.5, state: .normal))
     #expect(StatusGlyph.opacity(.idle) == 0.35)
-    #expect(StatusGlyph.opacity(.normal) == 1)
+    #expect(StatusGlyph.opacity(.live) == 1)
   }
 }
