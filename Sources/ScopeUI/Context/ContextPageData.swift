@@ -1,18 +1,11 @@
 public import ScopeCore
 
-/// Everything the Context page shows, as plain values: every word and every
-/// figure already written out. The views lay these out and decide nothing.
-///
-/// Built by `ContextPresenter` from a lane's analysis at the playhead, and by
-/// the snapshot tool straight from sample values.
 public struct ContextPageData: Sendable {
   public var cards: [SummaryCardData]
   public var strip: StripData
   public var legend: [LegendEntryData]
   public var blocks: BlocksData
-  /// Nil while nothing is selected.
   public var inspector: InspectorData?
-  /// What the sidebar says while nothing is selected.
   public var noSelection: String
 
   public init(
@@ -28,7 +21,6 @@ public struct ContextPageData: Sendable {
   }
 }
 
-/// One of the four summary cards.
 public struct SummaryCardData: Sendable, Hashable, Identifiable {
   public let label: String
   public let figure: String
@@ -44,7 +36,6 @@ public struct SummaryCardData: Sendable, Hashable, Identifiable {
   }
 }
 
-/// A kind in the legend under the strip. A nil kind is the untyped remainder.
 public struct LegendEntryData: Sendable, Hashable, Identifiable {
   public let kind: Kind?
   public let name: String
@@ -58,10 +49,7 @@ public struct LegendEntryData: Sendable, Hashable, Identifiable {
   }
 }
 
-/// The Blocks section: its line, the words of its controls and columns, and
-/// the rows the filters leave.
 public struct BlocksData: Sendable {
-  /// The table's column titles, in the order the columns stand.
   public struct Columns: Sendable, Hashable {
     public let kind: String
     public let block: String
@@ -85,8 +73,6 @@ public struct BlocksData: Sendable {
   public let title: String
   public let detail: String
   public let columns: Columns
-  /// What accessibility calls the filter picker and the text field, and what
-  /// the empty field shows.
   public let filterLabel: String
   public let searchLabel: String
   public let searchPrompt: String
@@ -105,18 +91,13 @@ public struct BlocksData: Sendable {
     self.rows = rows
   }
 
-  /// The row a block is listed under, if the filters leave it.
   public func row(containing block: SegmentID) -> BlockRowData? {
     rows.first { $0.members.contains(block) }
   }
 }
 
-/// One row of the blocks table: one block, or every tool definition one
-/// server offers.
 public struct BlockRowData: Sendable, Hashable, Identifiable {
-  /// The first block of the row, which is what selecting the row selects.
   public let id: SegmentID
-  /// Every block the row stands for, in reading order.
   public let members: [SegmentID]
   public let kind: Kind?
   public let kindName: String
@@ -124,7 +105,6 @@ public struct BlockRowData: Sendable, Hashable, Identifiable {
   public let size: String
   public let carried: String
   public let used: String
-  /// What `used` says, which decides the ink the table sets it in.
   public let use: BlockUse
   public let cost: String
 
@@ -145,16 +125,13 @@ public struct BlockRowData: Sendable, Hashable, Identifiable {
   }
 }
 
-/// The sidebar's account of the selected block or group.
 public struct InspectorData: Sendable, Hashable {
-  /// The block the buttons act on.
   public let block: SegmentID
   public let kind: Kind?
   public let kindName: String
   public let title: String
   public let facts: [FactData]
   public let textTitle: String
-  /// The recorded text, nil until it is read or when nothing was recorded.
   public let text: String?
   public let timelineTitle: String
   public let copyTitle: String

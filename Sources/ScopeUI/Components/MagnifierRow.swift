@@ -1,29 +1,21 @@
 internal import ScopeCore
 public import SwiftUI
 
-/// The words both magnifiers write.
 public enum MagnifierWords {
-  /// The line above a magnifier's rows: "blocks 812–833 of 1,284", counted
-  /// from one.
   public static func window(_ range: Range<Int>, of count: Int) -> String {
     "blocks \(UIFormat.count(range.lowerBound + 1))–\(UIFormat.count(range.upperBound)) "
       + "of \(UIFormat.count(count))"
   }
 
-  /// A magnifier's title: "Request 60", for a request index from zero.
   public static func request(_ index: Int) -> String {
     "Request \(UIFormat.count(RequestNumber.of(index)))"
   }
 
-  /// What stands beside the title: "142.6k · $0.058", the context's size and
-  /// what the request cost to send.
   public static func figures(tokens: Int, dollars: Double) -> String {
     "\(TokenFormat.short(tokens)) · \(TokenFormat.dollars(dollars))"
   }
 }
 
-/// A magnifier's heading, the same in both: the request, its figures, and
-/// the line saying which blocks the rows are.
 public struct MagnifierHeader: View {
   private let title: String
   private let figures: String
@@ -55,9 +47,6 @@ public struct MagnifierHeader: View {
   }
 }
 
-/// One block in a magnifier's list: its kind's swatch, its label and its
-/// size, marked when it is the one under the pointer. The timeline's column
-/// magnifier and the context strip's both list their blocks with it.
 public struct MagnifierRow: View {
   private let color: ThemeColor
   private let label: String

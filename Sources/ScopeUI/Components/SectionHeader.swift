@@ -1,20 +1,13 @@
 public import SwiftUI
 
-/// A section's title, with a detail line and anything the section needs to
-/// control beside it.
 public struct SectionHeader<Accessory: View>: View {
   public enum Layout: Sendable {
-    /// The detail at the far end, on the title's baseline: "Context in
-    /// reading order ... 0 → 200k tokens".
     case spread
-    /// The detail right after the title, and the accessory at the far end:
-    /// "Blocks 1,284 in this request ... [All | Unused] [Filter]".
     case inline
   }
 
   public enum Tone: Sendable {
     case secondary
-    /// A step darker, for a detail that carries a figure.
     case supporting
   }
 
@@ -25,8 +18,6 @@ public struct SectionHeader<Accessory: View>: View {
   private let accessory: Accessory
   @Environment(\.theme) private var theme
 
-  /// The detail is a `Text` so a caller can set a figure in it in a stronger
-  /// weight. Anything it does not style itself is set in the caption size.
   public init(
     _ title: String, detail: Text? = nil, tone: Tone = .secondary, layout: Layout = .spread,
     @ViewBuilder accessory: () -> Accessory

@@ -1,14 +1,8 @@
 public import SwiftUI
 
-/// A bar split into parts, each a share of the whole, on a track that shows
-/// what is left: the popover's context by kind against the window.
-///
-/// Every edge is put on a whole device pixel, so two parts never share a
-/// pixel and blur.
 public struct Meter: View {
   public struct Part: Sendable, Equatable {
     public let color: ThemeColor
-    /// A share of the whole bar, from zero to one.
     public let share: Double
 
     public init(color: ThemeColor, share: Double) {
@@ -48,11 +42,8 @@ public struct Meter: View {
   }
 }
 
-/// A row of thin bars standing on a common base, one per request, with some
-/// of them marked: the popover's context per request, with its cache breaks.
 public struct Sparkline: View {
   public struct Bar: Sendable, Equatable {
-    /// A share of the chart's height, from zero to one.
     public let height: Double
     public let isMarked: Bool
 
@@ -96,7 +87,6 @@ public struct Sparkline: View {
   }
 }
 
-/// Where an edge goes: on the nearest device pixel.
 enum Pixels {
   static func snap(_ value: CGFloat, scale: CGFloat) -> CGFloat {
     let scale = max(1, scale)

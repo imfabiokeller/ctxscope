@@ -2,17 +2,10 @@ internal import Foundation
 internal import ScopeCore
 public import SwiftUI
 
-/// The window: the header with the session, the lane, the page picker, the
-/// request stepper and the live pill, and the page under it.
 public struct InstrumentView: View {
   @Bindable var model: InstrumentModel
-  /// What a double-click on the header's empty part does. The window owns
-  /// zooming; the view only says when it was asked for.
   let onZoom: () -> Void
-  /// Puts text on the pasteboard, which only the app can reach.
   let onCopy: (String) -> Void
-  /// Where the pointer starts over the Context page's strip, for a picture
-  /// of its magnifier.
   let stripHover: StripHover?
   @Environment(\.theme) private var theme
 
@@ -66,7 +59,6 @@ public struct InstrumentView: View {
     .modifier(PlayheadKeys(model: model))
   }
 
-  /// The header, with what the page puts at its far end.
   private func header(@ViewBuilder trailing: () -> some View) -> some View {
     let lanes = model.list.lanes(of: model.recording?.sessionID ?? "")
     return WindowHeader(
@@ -75,9 +67,7 @@ public struct InstrumentView: View {
         ForEach(model.list.entries) { entry in
           Button(HeaderPresenter.item(entry)) { model.focus(session: entry.id) }
         }
-        // Only the focused session's own file is watched, so a session that
-        // started elsewhere since the last scan is not listed yet. Opening
-        // the menu is the moment to look again.
+        // Only the focused session's file is watched, so opening the menu rescans.
         .onAppear { model.reloadSessions() }
       },
       lane: HeaderPresenter.lane(model.lane, in: lanes),
@@ -90,15 +80,10 @@ public struct InstrumentView: View {
       liveTitle: model.liveness.isLive ? HeaderPresenter.liveTitle : nil,
       trailing: trailing
     )
-    // The window has no title bar of its own: the header is the title bar, so
-    // its empty parts drag the window and a double-click zooms it. The
-    // controls in it take their own clicks first.
     .gesture(WindowDragGesture())
     .onTapGesture(count: 2) { onZoom() }
   }
 
-  /// Nothing is focused, or what is focused has not been read yet. One line,
-  /// and it says what to do about it.
   private var empty: some View {
     VStack(spacing: theme.metrics.contextPage.textGap) {
       Text(model.isLoading ? "Reading the session" : (model.failure ?? "No session"))
@@ -112,9 +97,6 @@ public struct InstrumentView: View {
   }
 }
 
-/// The Context page over a model: the presenter's view of the analysis at the
-/// playhead, with the filters this page keeps and the selection the model
-/// keeps.
 private struct ContextPage<Header: View>: View {
   let model: InstrumentModel
   let analysis: LaneAnalysis

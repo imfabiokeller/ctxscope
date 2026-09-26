@@ -1,11 +1,6 @@
 public import SwiftUI
 
-/// The menu bar popover's panel: its surface, its rounded corners, its one
-/// point border and its shadow, with the content clipped inside the border.
-///
-/// The panel has no arrow and the window it sits in draws nothing of its
-/// own, so this is all of it. The border is outside the content's width, so
-/// the panel is two points wider than its content.
+/// The border sits outside the content, so the panel is two points wider.
 public struct PopoverPanel<Content: View>: View {
   private let content: Content
   @Environment(\.theme) private var theme
@@ -33,8 +28,6 @@ public struct PopoverPanel<Content: View>: View {
 }
 
 extension Theme.ShadowRole {
-  /// How far the shadow reaches past what casts it, above, to either side
-  /// and below: the room a window has to leave around it.
   public var reach: Metrics.Edges {
     Metrics.Edges(top: max(0, blur - y), horizontal: blur + abs(x), bottom: max(0, blur + y))
   }

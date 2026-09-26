@@ -1,14 +1,9 @@
 public import SwiftUI
 
-/// A one point rule. Named for its role rather than drawn as a `Divider`,
-/// whose color and thickness are the system's.
 public struct Hairline: View {
   public enum Role: Sendable {
-    /// Under the header, beside the sidebar, around a table's header.
     case hairline
-    /// Between groups inside a panel.
     case divider
-    /// Between the rows of a table.
     case row
   }
 
@@ -40,12 +35,9 @@ public struct Hairline: View {
   }
 }
 
-/// The grey bar at the bottom of a panel, with a divider above it.
 public struct PanelFooter<Content: View>: View {
   public enum Inset: Sendable {
-    /// Holding buttons, which bring their own height.
     case buttons
-    /// Holding text-only buttons.
     case text
   }
 

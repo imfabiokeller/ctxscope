@@ -1,13 +1,6 @@
 public import ScopeCore
 
-/// The Timeline page from a lane's analyses: a pure function from what
-/// ScopeCore measured to what the page says. Every word on the page is
-/// written here or in `BreakWording`, and nothing is measured here.
 public enum TimelinePresenter {
-  /// `promptLines` is the first line of each typed prompt, by its block, as
-  /// `SessionHost.promptLines` reads it back. `selectedPrompt` is a prompt's
-  /// number, from one; nil selects none and dims no column. `names` is what
-  /// each block is called, as `SessionHost.blockDetails` reads it back.
   public static func present(
     lane: Lane,
     costs: CostAnalysis,
@@ -34,14 +27,12 @@ public enum TimelinePresenter {
     )
   }
 
-  /// "1–5", request numbers as a person counts them.
   static func range(_ requests: ClosedRange<Int>) -> String {
     let first = RequestNumber.of(requests.lowerBound)
     let last = RequestNumber.of(requests.upperBound)
     return first == last ? "\(first)" : "\(first)\u{2013}\(last)"
   }
 
-  /// "+4.5k", and "-2.1k" for a prompt a compaction made smaller.
   static func signed(_ tokens: Int) -> String {
     (tokens >= 0 ? "+" : "") + TokenFormat.short(tokens)
   }

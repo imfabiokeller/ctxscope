@@ -1,12 +1,9 @@
 internal import ScopeCore
 
 extension TimelineChart {
-  /// Gridlines divide the height into this many parts.
   static let tokenIntervals = 4
-  /// About this many request numbers between the first and the last.
   static let requestIntervals = 4
 
-  /// From 0 to the full height in equal parts: "0", "50k" ... "200k".
   public static func tokenTicks(_ scale: Int) -> [Tick] {
     (0...tokenIntervals).map { part in
       Tick(
@@ -15,9 +12,6 @@ extension TimelineChart {
     }
   }
 
-  /// "request 1", then round request numbers, then the last: 1, 20, 40, 60,
-  /// 87. A round number closer to the last than half a step is left out, so
-  /// two labels never crowd each other at the end.
   public static func requestTicks(_ count: Int) -> [Tick] {
     guard count > 0 else { return [] }
     var ticks = [Tick("request 1", at: 0)]
@@ -34,7 +28,6 @@ extension TimelineChart {
     return ticks
   }
 
-  /// The round number nearest a step: 1, 2 or 5 times a power of ten.
   static func roundStep(_ raw: Double) -> Int {
     var power = 1
     while Double(power * 10) <= raw { power *= 10 }

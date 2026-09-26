@@ -1,8 +1,6 @@
 internal import ScopeCore
 public import SwiftUI
 
-/// Where the pointer is over the strip: the slice under it, and how far
-/// along the strip it is.
 public struct StripHover: Equatable, Sendable {
   public let index: Int
   public let x: CGFloat
@@ -13,9 +11,6 @@ public struct StripHover: Equatable, Sendable {
   }
 }
 
-/// "Context in reading order": the two marks, the strip of every block at the
-/// window's scale, and the legend. Hovering names the blocks under the
-/// pointer in a magnifier; a click selects the block.
 struct ContextStrip: View {
   let strip: StripData
   let legend: [LegendEntryData]
@@ -23,7 +18,6 @@ struct ContextStrip: View {
   @State private var hover: StripHover?
   @Environment(\.theme) private var theme
 
-  /// `hover` is where the pointer starts, for a picture of the magnifier.
   init(
     strip: StripData, legend: [LegendEntryData], hover: StripHover? = nil,
     onSelect: @escaping (SegmentID) -> Void
@@ -73,8 +67,7 @@ struct ContextStrip: View {
         }
       }
       .frame(height: metrics.height)
-      // Above the legend that follows it, so the magnifier hanging below the
-      // strip covers the legend rather than the other way round.
+      // Above the legend, so the magnifier hanging below covers it.
       .zIndex(1)
       .accessibilityElement()
       .accessibilityLabel(strip.title)

@@ -1,8 +1,5 @@
 internal import SwiftUI
 
-/// The popover with no session in focus: how to focus one from a chat, the
-/// sessions written to most recently, and a way into the window or out of
-/// the app.
 struct EmptyPopoverView: View {
   let content: EmptyPopover
   let actions: PopoverActions
@@ -42,7 +39,6 @@ struct EmptyPopoverView: View {
   }
 }
 
-/// The recent sessions, one row each: name, folder and length, and when.
 private struct RecentSessions: View {
   let sessions: [RecentSession]
   let pick: (String) -> Void

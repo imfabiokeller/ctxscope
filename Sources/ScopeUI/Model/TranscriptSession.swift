@@ -2,23 +2,13 @@ internal import Foundation
 internal import ScopeCapture
 internal import ScopeCore
 
-/// One transcript session held open, with a judge per lane fed as the session
-/// grows.
-///
-/// The judge is appended to, never re-fed: the work per
-/// request has to be proportional to that request, and following a live 1M session is
-/// the case that proves it.
 final class TranscriptSession: OpenSession {
   let session: SessionRef
   private(set) var captured: CapturedSession
   private var capture: SessionCapture
   private var judges: [LaneID: LexicalJudge] = [:]
-  /// How much of each lane's judge input has already been fed.
   private var fedSegments: [LaneID: Int] = [:]
   private var fedConsumers: [LaneID: Int] = [:]
-  /// Lanes anybody has asked about. A judge is built for a lane when the lane
-  /// is shown: feeding one for all fifty lanes of a large session costs
-  /// hundreds of megabytes nobody asked for.
   private var wanted: Set<LaneID> = [.main]
 
   var windowHints: ModelWindowHints {
@@ -35,8 +25,6 @@ final class TranscriptSession: OpenSession {
 
   @discardableResult
   func refresh() throws -> Bool {
-    // Given up on between batches when nobody is waiting for it any more. A
-    // user who picks another session should not wait out the one they left.
     let result = try capture.refresh { Task.isCancelled }
     guard result.newLines > 0 || result.skippedLines > 0 else { return false }
     captured = capture.current()
@@ -50,8 +38,7 @@ final class TranscriptSession: OpenSession {
       return ReferenceReport(method: Self.makeJudge().method, findings: [])
     }
     let report = judge.report()
-    // The judge keeps what it worked out, so put it back rather than throwing
-    // the memo away with the copy.
+    // The judge memoizes inside the copy, so the copy goes back.
     judges[lane] = judge
     return report
   }
@@ -68,13 +55,6 @@ final class TranscriptSession: OpenSession {
     LexicalJudge(segmentShingleCap: CapturedSession.segmentShingleCap)
   }
 
-  /// Hands each judge only what it has not seen.
-  ///
-  /// The newest consumer is always fed again, because a response grows as it
-  /// streams. That is safe: a judge marks matched shingles in a set and only
-  /// records a reference request once, so feeding the same consumer twice
-  /// cannot count anything twice. A lane whose input shrank, which a rewind
-  /// can do, is built again from scratch.
   private func feedJudges() {
     for (lane, input) in captured.judgeInputs where wanted.contains(lane) {
       var judge = judges[lane] ?? Self.makeJudge()
@@ -85,6 +65,8 @@ final class TranscriptSession: OpenSession {
         segments = 0
         consumers = 0
       }
+      // The newest consumer is fed again because a response grows as it streams.
+      // Safe: a judge records each reference once.
       let from = max(0, consumers - 1)
       guard input.segments.count > segments || input.consumers.count > from else { continue }
       for segment in input.segments[segments...] { judge.add(segment: segment) }

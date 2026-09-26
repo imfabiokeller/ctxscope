@@ -1,20 +1,11 @@
 public import ScopeCore
 
-/// The figures of one lane that depend on where the playhead is: the context
-/// in reading order, what each block has cost so far, the unused part, and
-/// the tool definitions by server.
-///
-/// Worked out once when the playhead moves or the lane changes. A block's
-/// cost so far walks every block of the lane, and a view that asked for it
-/// in its body would walk them again on every hover.
 public struct PlayheadFigures: Sendable {
-  /// The request these are as of, from zero.
   public let request: Int
   public let column: ReadingOrder.Column
   public let blockCosts: BlockCostAnalysis
   public let unused: UnusedSummary
   public let toolGroups: [ToolGroup]
-  /// Nil only for a lane with no requests.
   public let tally: RequestTally?
   public let cost: RequestCost?
 

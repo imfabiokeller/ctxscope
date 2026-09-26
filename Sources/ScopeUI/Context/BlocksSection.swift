@@ -1,9 +1,6 @@
 internal import ScopeCore
 internal import SwiftUI
 
-/// The Blocks section: its line with the filter and the text filter, and the
-/// table, largest first. Selecting a row selects its block, and a selection
-/// made anywhere else marks the row it is listed under.
 struct BlocksSection: View {
   let blocks: BlocksData
   @Binding var filter: BlockFilter
@@ -29,7 +26,6 @@ struct BlocksSection: View {
       set: { selection = $0 })
   }
 
-  /// "no" in its own color, "not tracked" quieter than a fact.
   private func ink(_ use: BlockUse) -> ThemeColor {
     switch use {
     case .used: theme.text.primary

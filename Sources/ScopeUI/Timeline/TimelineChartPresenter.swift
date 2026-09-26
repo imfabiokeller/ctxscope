@@ -1,7 +1,5 @@
 internal import ScopeCore
 
-/// The "Context per request" chart from a lane's reading order, costs and
-/// cache breaks.
 enum TimelineChartPresenter {
   static func chart(
     lane: Lane, costs: CostAnalysis, cache: CacheAnalysis, order: ReadingOrder,

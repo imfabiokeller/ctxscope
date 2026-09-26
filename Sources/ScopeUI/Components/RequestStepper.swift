@@ -1,7 +1,5 @@
 public import SwiftUI
 
-/// Steps through the requests one at a time: "‹ Request 87 of 87 ›". An arrow
-/// that has nowhere to go is disabled.
 public struct RequestStepper: View {
   private let position: Int
   private let count: Int
@@ -9,7 +7,6 @@ public struct RequestStepper: View {
   private let onNext: () -> Void
   @Environment(\.theme) private var theme
 
-  /// `position` counts from 1, the way requests are numbered.
   public init(
     position: Int, count: Int, onPrevious: @escaping () -> Void, onNext: @escaping () -> Void
   ) {
@@ -49,8 +46,6 @@ public struct RequestStepper: View {
   }
 }
 
-/// A borderless square around an arrow, which only shows itself when
-/// pressed.
 private struct StepperArrowStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     StepperArrowFace(configuration: configuration)

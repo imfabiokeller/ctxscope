@@ -1,19 +1,12 @@
 public import ScopeCore
 
-/// Which blocks the table lists.
 public enum BlockFilter: String, Sendable, CaseIterable, Hashable {
   case all = "All"
   case unused = "Unused"
   case everyRequest = "Sent every request"
 }
 
-/// The Context page, worked out from a lane's analysis and the figures at
-/// the playhead: every word and number it shows. A pure function, so what the
-/// page says is tested without drawing it.
 public enum ContextPresenter {
-  /// What the page shows for a filter, a text filter on the names and a
-  /// selection. `text` is the selected block's recorded text once it has
-  /// been read, and `names` what each block is called once its detail has.
   public static func page(
     _ analysis: LaneAnalysis, _ figures: PlayheadFigures, filter: BlockFilter = .all,
     query: String = "", selection: SegmentID? = nil, text: String? = nil,
@@ -33,10 +26,8 @@ public enum ContextPresenter {
       noSelection: noSelection)
   }
 
-  /// What the sidebar says while nothing is selected.
   public static let noSelection = "Select a block in the table or the strip."
 
-  /// The Blocks section for a request of `count` blocks, with these rows.
   public static func blocks(count: Int, rows: [BlockRowData]) -> BlocksData {
     BlocksData(
       title: "Blocks", detail: "\(UIFormat.count(count)) in this request · largest first",
@@ -46,7 +37,6 @@ public enum ContextPresenter {
       filterLabel: "Show", searchLabel: "Filter blocks", searchPrompt: "Filter", rows: rows)
   }
 
-  /// The word a kind is written as, and the one for the untyped remainder.
   static func name(of kind: Kind?) -> String { kind?.rawValue ?? "untyped" }
 
   static func cards(_ analysis: LaneAnalysis, _ figures: PlayheadFigures) -> [SummaryCardData] {
@@ -118,8 +108,6 @@ public enum ContextPresenter {
       figures: MagnifierWords.figures(tokens: column.end, dollars: figures.cost?.context ?? 0))
   }
 
-  /// Every kind with its size and share, then the untyped remainder when
-  /// there is one.
   static func legend(_ figures: PlayheadFigures) -> [LegendEntryData] {
     guard let tally = figures.tally else { return [] }
     let total = max(1, tally.total.value)

@@ -1,11 +1,6 @@
 public import SwiftUI
 
-/// A pop-up button in the window's header: a title, a quieter subtitle and a
-/// chevron, opening a real menu.
-///
-/// A native `Menu` in button style, so the menu, its keyboard handling and
-/// its accessibility are the system's. Only the face is the theme's, through
-/// a button style, which is also what lets it render offscreen.
+/// The face is a button style, which is also what lets the menu render offscreen.
 public struct ToolbarPopUpButton<Items: View>: View {
   private let title: String
   private let subtitle: String?
@@ -13,8 +8,6 @@ public struct ToolbarPopUpButton<Items: View>: View {
   private let items: Items
   @Environment(\.theme) private var theme
 
-  /// `emphasized` sets the title in the strong weight, the way the session's
-  /// name is set.
   public init(
     title: String, subtitle: String? = nil, emphasized: Bool = false,
     @ViewBuilder items: () -> Items
@@ -48,8 +41,6 @@ public struct ToolbarPopUpButton<Items: View>: View {
   }
 }
 
-/// The face of a header control: white, a slightly lighter border than a
-/// push button's, and less padding.
 struct ToolbarControlStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     ToolbarControlFace(configuration: configuration)
@@ -65,7 +56,6 @@ private struct ToolbarControlFace: View {
     let shape = RoundedRectangle(cornerRadius: control.cornerRadius)
     configuration.label
       .foregroundStyle(theme.text.primary.color)
-      // The padding is inside the border.
       .padding(.horizontal, control.popUpPadding + theme.metrics.hairline)
       .frame(height: control.height)
       .background {

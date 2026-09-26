@@ -1,31 +1,14 @@
 internal import Foundation
 internal import Observation
 
-/// Keeps the last drawing of a chart, and draws the next one off the main
-/// thread. The one place a chart's picture is cached: the timeline keeps its
-/// columns here.
-///
-/// It is a class its owner keeps rather than view state because a renderer
-/// with no run loop never finishes a task, so it asks for the drawing
-/// synchronously, and in a real window a view that
-/// asks for a drawing the cache does not have starts it off the main actor and
-/// gets nothing for that frame. The drawing is observed, so the frame that
-/// finds it happens by itself.
 @MainActor
 @Observable
 package final class DrawingCache<Key: Hashable & Sendable, Value: Sendable> {
-  /// How many drawings were made, and how many of those on the main thread.
-  /// Zero on the main thread in the app, and every one of them under a
-  /// renderer.
   @ObservationIgnored package private(set) var builds = 0
   @ObservationIgnored package private(set) var mainThreadBuilds = 0
 
   private var current: Entry?
-  /// The draw in flight, so a view that asks for the same drawing on every
-  /// frame while it is being made starts it once.
   @ObservationIgnored private var pending: Key?
-  /// Told of every drawing made, with its key and whether it was made on the
-  /// main thread, for counts kept across caches.
   @ObservationIgnored private let onBuild: @MainActor (Key, Bool) -> Void
 
   private struct Entry {
@@ -37,10 +20,7 @@ package final class DrawingCache<Key: Hashable & Sendable, Value: Sendable> {
     self.onBuild = onBuild
   }
 
-  /// The drawing for a key, or nothing while it is being made.
-  ///
-  /// `synchronously` is for a renderer with no run loop. A window passes false
-  /// and never blocks on a draw.
+  // A renderer with no run loop never finishes a task, so it passes `synchronously`.
   package func value(
     for key: Key, synchronously: Bool, draw: @escaping @Sendable () -> Value?
   ) -> Value? {

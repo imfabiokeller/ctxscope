@@ -1,7 +1,5 @@
 internal import SwiftUI
 
-/// The buttons under a session in focus: open the window, pick another
-/// session, and the rest of what the item can do behind "More".
 struct FocusedFooter: View {
   let others: [RecentSession]
   let actions: PopoverActions

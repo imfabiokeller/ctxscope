@@ -1,10 +1,8 @@
 public import SwiftUI
 
-/// What a pop-up button in the header says: a title and a quieter subtitle.
 public struct PopUpTitle: Sendable, Hashable {
   public let title: String
   public let subtitle: String?
-  /// Set in the strong weight, the way the session's name is.
   public let emphasized: Bool
 
   public init(_ title: String, subtitle: String? = nil, emphasized: Bool = false) {
@@ -14,13 +12,7 @@ public struct PopUpTitle: Sendable, Hashable {
   }
 }
 
-/// The bar across the top of the window: which session and lane, which
-/// view, what the view steps through, and whether the session is live.
-///
-/// It takes plain values, bindings and closures and knows nothing about
-/// sessions, so a screen decides what it says and the bar only lays it out.
-/// The leading space is left for the traffic lights, which the system draws
-/// over the bar because the window has no title bar of its own.
+// The leading space is left for the traffic lights, which the system draws over the bar.
 public struct WindowHeader<
   Page: Hashable, SessionItems: View, LaneItems: View, Trailing: View
 >: View {
@@ -35,9 +27,6 @@ public struct WindowHeader<
   private let trailing: Trailing
   @Environment(\.theme) private var theme
 
-  /// `trailing` is what the page puts at the far end, before the live pill:
-  /// the request stepper, or a summary line. `liveTitle` is nil while the
-  /// session is not being written to.
   public init(
     session: PopUpTitle, @ViewBuilder sessionItems: () -> SessionItems,
     lane: PopUpTitle, @ViewBuilder laneItems: () -> LaneItems,
@@ -82,8 +71,6 @@ public struct WindowHeader<
   }
 }
 
-/// A line of figures at the header's far end, where a page has nothing to
-/// step through: "87 requests · $3.94".
 public struct HeaderNote: View {
   private let text: String
   @Environment(\.theme) private var theme

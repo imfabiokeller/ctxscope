@@ -1,9 +1,6 @@
 internal import ScopeCore
 internal import SwiftUI
 
-/// The popover of a session in focus: its name and where it is, its size by
-/// kind, three figures, its last cache break, its context per request, and
-/// the buttons.
 struct FocusedPopoverView: View {
   let content: FocusedPopover
   let actions: PopoverActions
@@ -32,7 +29,6 @@ struct FocusedPopoverView: View {
     }
   }
 
-  /// A figure as the list sets it: the value strong, its note quieter.
   private func entry(_ figure: FocusedPopover.Figure) -> DefinitionList.Entry {
     guard let note = figure.note else { return DefinitionList.Entry(figure.term, figure.value) }
     let quiet = Text(" " + note).font(theme.type.body).foregroundStyle(theme.text.secondary.color)
@@ -40,8 +36,6 @@ struct FocusedPopoverView: View {
   }
 }
 
-/// The session's name, its lane and whether it is live, and the line under
-/// them.
 private struct PopoverTitle: View {
   let content: FocusedPopover
   @Environment(\.theme) private var theme
@@ -75,7 +69,6 @@ private struct PopoverTitle: View {
   }
 }
 
-/// The size, how much of the window it fills, and what it is made of.
 private struct PopoverSize: View {
   let content: FocusedPopover
   @Environment(\.theme) private var theme
@@ -102,7 +95,6 @@ private struct PopoverSize: View {
     .padding(popover.sizePadding)
   }
 
-  /// The six kinds in rows of three, every column as wide as the others.
   private var legend: some View {
     let popover = theme.metrics.popover
     let rows = stride(from: 0, to: content.kinds.count, by: popover.legendColumns).map {
@@ -125,7 +117,6 @@ private struct PopoverSize: View {
   }
 }
 
-/// The most recent cache break: how long ago, where, why, and what it added.
 private struct PopoverBreak: View {
   let lastBreak: FocusedPopover.CacheBreak
   @Environment(\.theme) private var theme
@@ -153,7 +144,6 @@ private struct PopoverBreak: View {
   }
 }
 
-/// The context of every request, and the range it covers.
 private struct PopoverSpark: View {
   let range: String
   let bars: [SparkBar]

@@ -1,11 +1,6 @@
 internal import ScopeCore
 internal import SwiftUI
 
-/// What is under the pointer on the strip, enlarged: the blocks around it on
-/// a lens of their own, then one row each with its kind, name and size, the
-/// hovered one marked. A block of 30 tokens between two of 12k is a sliver on
-/// the strip and a row here. The timeline's magnifier in the strip's form:
-/// the same box, the same rows.
 struct StripMagnifier: View {
   let strip: StripData
   let index: Int
@@ -43,7 +38,6 @@ struct StripMagnifier: View {
     .overlay { shape.strokeBorder(theme.line.popover.color, lineWidth: theme.metrics.hairline) }
   }
 
-  /// The tokens the lens spans: from the first block shown to the last.
   private func lens(_ range: Range<Int>) -> Range<Double> {
     guard let first = range.first, let last = range.last else { return 0..<1 }
     return Double(strip.slices[first].start)..<Double(max(strip.slices[last].end, 1))

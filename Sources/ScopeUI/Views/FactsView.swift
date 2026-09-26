@@ -1,6 +1,5 @@
 internal import SwiftUI
 
-/// A sidebar's facts on their tiles, a kind's swatch in its theme color.
 struct FactsView: View {
   let facts: [FactData]
   @Environment(\.theme) private var theme

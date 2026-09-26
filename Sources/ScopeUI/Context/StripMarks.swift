@@ -1,8 +1,5 @@
 internal import SwiftUI
 
-/// The two marks above the strip: a bracket over what is sent with every
-/// request, and a line where what was read from the cache ends, each with
-/// its label where `StripMarkLayout` puts it.
 struct StripMarks: View {
   let strip: StripData
   @Environment(\.theme) private var theme
@@ -31,8 +28,6 @@ struct StripMarks: View {
     .frame(height: metrics.markHeight)
   }
 
-  /// The bracket's opening edge and its foot. The closing edge is its own
-  /// view, because a label may run across it.
   private var bracket: some View {
     let hairline = theme.metrics.hairline
     let color = theme.chart.bracket.color
@@ -51,7 +46,6 @@ struct StripMarks: View {
   }
 }
 
-/// Which part of the marks a view is.
 private enum MarkRole: LayoutValueKey {
   case none
   case bracket
@@ -63,8 +57,6 @@ private enum MarkRole: LayoutValueKey {
   static let defaultValue = MarkRole.none
 }
 
-/// Places the marks at their share of the width and the labels where
-/// `StripMarkLayout` says.
 private struct MarksLayout: Layout {
   let prefix: Double?
   let cache: Double?
@@ -111,8 +103,6 @@ private struct MarksLayout: Layout {
     }
   }
 
-  /// A mark's upright at `x`, the row's full height, or from under the
-  /// labels when one of them runs across it.
   private func upright(_ view: LayoutSubview, at x: CGFloat, under: Bool, in bounds: CGRect) {
     let top = under ? labelHeight : 0
     view.place(

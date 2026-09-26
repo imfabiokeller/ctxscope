@@ -1,12 +1,6 @@
 internal import Foundation
 public import SwiftUI
 
-/// One color, written the way a theme file writes it, and turned into a
-/// display color in one place.
-///
-/// Three notations: `#RRGGBB`, `rgba(r, g, b, a)` and `oklch(L C H)`, the
-/// last converted through OKLab so a color written as a lightness is that
-/// lightness on screen.
 public struct ThemeColor: Sendable, Hashable, Codable {
   public let red: Double
   public let green: Double
@@ -44,13 +38,7 @@ public struct ThemeColor: Sendable, Hashable, Codable {
     Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
   }
 
-  /// The same color for Core Graphics, which is what the cached column image
-  /// is drawn with. Views never build one themselves.
-  ///
-  /// sRGB, the same space SwiftUI's own colors are in. Device RGB matches it
-  /// on the offscreen renders and can differ on a wide gamut display, which
-  /// would put the columns in one space and everything drawn over them in
-  /// another.
+  // sRGB like SwiftUI's own colors: device RGB can differ on a wide gamut display.
   public var cgColor: CGColor {
     CGColor(
       colorSpace: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
@@ -58,8 +46,6 @@ public struct ThemeColor: Sendable, Hashable, Codable {
     ) ?? CGColor(gray: 0, alpha: alpha)
   }
 
-  /// The same color at a different opacity, for the one case a theme cannot
-  /// name in advance: dimming the requests outside the selected prompt.
   public func opacity(_ value: Double) -> ThemeColor {
     ThemeColor(red: red, green: green, blue: blue, alpha: alpha * value)
   }
@@ -77,8 +63,7 @@ public struct ThemeColor: Sendable, Hashable, Codable {
       .compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
     switch name {
     case "rgba", "rgb":
-      // A channel outside 0 to 255 is a typo, not a color. Clamping it would
-      // turn a broken theme into a quietly wrong one.
+      // Out of range is a typo: rejected rather than clamped into a quietly wrong color.
       guard numbers.count >= 3,
         numbers[0...2].allSatisfy({ $0 >= 0 && $0 <= 255 }),
         numbers.count < 4 || (numbers[3] >= 0 && numbers[3] <= 1)
@@ -118,11 +103,9 @@ public struct ThemeColor: Sendable, Hashable, Codable {
   }
 }
 
-/// A color in OKLCH, and the one conversion from it to what a display shows.
 public struct OKLCH: Sendable, Hashable, Codable {
   public var lightness: Double
   public var chroma: Double
-  /// Degrees.
   public var hue: Double
 
   public init(lightness: Double, chroma: Double, hue: Double) {
@@ -131,8 +114,6 @@ public struct OKLCH: Sendable, Hashable, Codable {
     self.hue = hue
   }
 
-  /// OKLCH to sRGB, by way of OKLab and linear light. Out of gamut components
-  /// are clamped, which is what a display does anyway.
   public func displayComponents() -> (red: Double, green: Double, blue: Double) {
     let radians = hue * Double.pi / 180
     let a = chroma * cos(radians)
@@ -149,7 +130,6 @@ public struct OKLCH: Sendable, Hashable, Codable {
     )
   }
 
-  /// Linear light to sRGB, clamped to what can be shown.
   private static func encode(_ value: Double) -> Double {
     let clamped = min(1, max(0, value))
     return clamped <= 0.003_130_8

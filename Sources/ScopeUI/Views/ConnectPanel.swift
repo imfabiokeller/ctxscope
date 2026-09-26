@@ -1,15 +1,8 @@
 package import SwiftUI
 
-/// The Connect panel: what is connected, the exact diff, and one button that
-/// reads Connect or Disconnect.
-///
-/// Plain words and nothing explained at length. What the button would write is
-/// on screen before it writes it.
 package struct ConnectPanel: View {
-  /// Held, not owned. The window and the snapshot tool make the model; a
-  /// `@State` of it reads its initial values under the offscreen renderer,
-  /// and the panel then shows a diff that has already been worked out as
-  /// though it had not been.
+  /// Held, not `@State`: under the offscreen renderer a `@State` model reads its
+  /// initial values and shows a stale diff.
   private let model: ConnectModel
   @Environment(\.theme) private var theme
 
@@ -23,9 +16,6 @@ package struct ConnectPanel: View {
       VStack(alignment: .leading, spacing: connect.gap) {
         FactsView(facts: facts)
         notes
-        // A file ctxscope will not touch has no diff to show, and a line
-        // saying nothing changes under a line saying why reads like a
-        // contradiction.
         if model.plan != nil {
           if model.diff.isEmpty {
             note("Nothing in the settings file changes.", theme.text.secondary)
@@ -47,8 +37,6 @@ package struct ConnectPanel: View {
     .background(theme.surface.window.color)
   }
 
-  /// The hooks on a row of their own, because their state can be a long
-  /// line, and the transcripts and the skill beside each other under them.
   private var facts: [FactData] {
     [
       FactData("Hooks", model.hooks.text, wide: true),
@@ -65,8 +53,6 @@ package struct ConnectPanel: View {
     }
   }
 
-  /// What the hooks need, the copy of the settings file, and what failed:
-  /// all under the tiles, because they are about what the button does.
   @ViewBuilder
   private var notes: some View {
     let lines = [

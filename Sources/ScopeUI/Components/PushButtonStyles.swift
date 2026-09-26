@@ -1,14 +1,8 @@
 public import SwiftUI
 
-// The push buttons, as button styles, so every button stays a native
-// `Button` with its keyboard, focus and accessibility behavior and only its
-// face comes from the theme.
-
-/// A white button with a border: "Copy text", "Change session…".
 public struct BorderedPushStyle: ButtonStyle {
   public enum Size: Sendable {
     case regular
-    /// Beside a command in the popover, which is set taller.
     case tall
   }
 
@@ -19,22 +13,18 @@ public struct BorderedPushStyle: ButtonStyle {
   }
 }
 
-/// A square bordered button holding one glyph: the popover's "More".
 public struct IconPushStyle: ButtonStyle {
   public func makeBody(configuration: Configuration) -> some View {
     PushFace(configuration: configuration, isIconOnly: true, size: .regular)
   }
 }
 
-/// The one filled button in a panel: "Open window".
 public struct PrimaryPushStyle: ButtonStyle {
   public func makeBody(configuration: Configuration) -> some View {
     PrimaryFace(configuration: configuration)
   }
 }
 
-/// A button that is only its text: a link in the accent color, or a plain
-/// command such as "Quit ctxscope".
 public struct TextLinkStyle: ButtonStyle {
   public enum Tone: Sendable {
     case accent
@@ -48,8 +38,6 @@ public struct TextLinkStyle: ButtonStyle {
   }
 }
 
-/// A whole row that is one button, with no face until it is pressed: a
-/// recent session in the popover.
 public struct ListRowStyle: ButtonStyle {
   public func makeBody(configuration: Configuration) -> some View {
     RowFace(configuration: configuration)
@@ -82,9 +70,6 @@ extension ButtonStyle where Self == TextLinkStyle {
   }
 }
 
-/// The face of a bordered and an icon button. A view rather than a function
-/// of the style, because only a view can read the theme and whether the
-/// button is enabled.
 private struct PushFace: View {
   let configuration: ButtonStyleConfiguration
   let isIconOnly: Bool
@@ -99,7 +84,6 @@ private struct PushFace: View {
     configuration.label
       .font(theme.type.body)
       .foregroundStyle((isEnabled ? theme.text.primary : theme.text.disabled).color)
-      // The padding is inside the border.
       .padding(.horizontal, isIconOnly ? 0 : control.buttonPadding + theme.metrics.hairline)
       .frame(width: isIconOnly ? height : nil, height: height)
       .background {

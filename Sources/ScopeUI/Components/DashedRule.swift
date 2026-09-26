@@ -1,7 +1,5 @@
 public import SwiftUI
 
-/// A dashed vertical line, which marks a moment on a chart: a cache break's
-/// line, and its key in the legend. It fills the height it is given.
 public struct DashedRule: View {
   private let color: ThemeColor
   @Environment(\.theme) private var theme

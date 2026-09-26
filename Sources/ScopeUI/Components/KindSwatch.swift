@@ -1,14 +1,9 @@
 public import SwiftUI
 
-/// The small rounded square that stands for a kind wherever its name is
-/// written.
 public struct KindSwatch: View {
   public enum Size: Sendable {
-    /// In a table row and above the sidebar's title.
     case table
-    /// In the legend under a chart.
     case legend
-    /// In the popover's legend.
     case compact
   }
 
@@ -36,18 +31,12 @@ public struct KindSwatch: View {
   }
 }
 
-/// A kind's swatch with its name, and a size or share beside it.
 public struct KindLegendItem: View {
   public enum Style: Sendable {
-    /// Under the context bar: the name in medium weight, the detail quieter.
     case detailed
-    /// Above the timeline: the name alone.
     case plain
-    /// In the popover: small type, name and detail as one run.
     case compact
-    /// A table's Kind cell.
     case table
-    /// Above the sidebar's title, in secondary size.
     case caption
   }
 
@@ -87,8 +76,6 @@ public struct KindLegendItem: View {
         Text(name).font(type.caption).foregroundStyle(text.supporting.color)
       }
     }
-    // A legend names every kind, so an item keeps its size and never cuts
-    // its name short.
     .fixedSize()
     .line(
       style == .compact

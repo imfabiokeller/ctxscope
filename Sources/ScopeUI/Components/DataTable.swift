@@ -1,18 +1,8 @@
 public import SwiftUI
 
-/// A table of rows with a header, one selected row, and selection by click
-/// and by the up and down arrows.
-///
-/// Rows are laid out lazily, so a table of a few thousand blocks costs what
-/// its visible rows cost. SwiftUI's own `Table` would bring the system's
-/// header, row height and selection color, none of which is the theme's.
-/// Each row is a native button, so a click selects it and accessibility
-/// reads it as one element with its selected state.
 public struct DataTable<Row: Identifiable>: View {
   public enum Density: Sendable {
-    /// A 28 point header and 30 point rows: the blocks table.
     case regular
-    /// A 26 point header and 28 point rows: the prompts table.
     case compact
   }
 
@@ -39,8 +29,7 @@ public struct DataTable<Row: Identifiable>: View {
       Hairline()
       header
       Hairline()
-      // A scroll view renders as an empty box offscreen, so under the
-      // renderer the rows are laid out plainly and clipped to the table.
+      // A scroll view renders as an empty box offscreen.
       if isRendering {
         VStack(spacing: 0) { rowViews }
           .frame(maxHeight: .infinity, alignment: .top)
@@ -98,8 +87,6 @@ public struct DataTable<Row: Identifiable>: View {
     .foregroundStyle(theme.text.primary.color)
   }
 
-  /// One cell per column, spaced and inset the way every row and the header
-  /// are.
   private func cells(
     @ViewBuilder _ content: @escaping (DataColumn<Row>) -> some View
   ) -> some View {
@@ -111,8 +98,6 @@ public struct DataTable<Row: Identifiable>: View {
     .padding(.horizontal, table.cellPadding)
   }
 
-  /// Moves the selection one row up or down, and starts at the top when
-  /// nothing is selected yet.
   private func move(by step: Int) -> KeyPress.Result {
     guard !rows.isEmpty else { return .ignored }
     let current = selection.flatMap { id in rows.firstIndex { $0.id == id } }

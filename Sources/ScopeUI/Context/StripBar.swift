@@ -1,18 +1,10 @@
 internal import ScopeCore
 internal import SwiftUI
 
-/// Blocks on a scale of tokens, one slice each, in their kind's color with a
-/// rule after every slice wide enough to carry one, and an outline around a
-/// span. The strip and the magnifier's lens are both this.
-///
-/// One path per kind, so a strip of a few thousand blocks is seven fills and
-/// not a few thousand. Equatable, so a pointer moving over it redraws the
-/// magnifier and not the strip.
+/// Equatable, so a pointer moving over it redraws the magnifier and not the strip.
 struct StripBar: View, Equatable {
   let slices: ArraySlice<StripSlice>
-  /// The tokens at the leading and the trailing edge.
   let window: Range<Double>
-  /// The span outlined, in tokens.
   let outlined: Range<Int>?
   let cornerRadius: CGFloat
   @Environment(\.theme) private var theme

@@ -1,13 +1,8 @@
 public import SwiftUI
 
-/// Recorded text in a box: a block's text in the sidebar, or the diff the
-/// Connect panel shows before it writes.
 public struct CodeBlock: View {
   public enum Height: Sendable {
-    /// Cut off at a fixed height: the sidebar shows the start of a block,
-    /// and the whole of it is a copy away.
     case capped
-    /// As tall as the room there is, scrolling what does not fit.
     case filling
   }
 
@@ -25,14 +20,10 @@ public struct CodeBlock: View {
     let code = theme.metrics.code
     let shape = RoundedRectangle(cornerRadius: code.cornerRadius)
     Group {
-      // A scroll view renders as an empty box offscreen, so under the
-      // renderer the filling box is cut off like the capped one.
+      // A scroll view renders as an empty box offscreen.
       if height == .filling, !isRendering {
         ScrollView { lines.frame(maxWidth: .infinity, alignment: .leading) }
       } else {
-        // All of the text is laid out and the box cuts it at its height,
-        // rather than the last line that fits being shortened with an
-        // ellipsis.
         lines
           .fixedSize(horizontal: false, vertical: true)
           .frame(
@@ -53,14 +44,11 @@ public struct CodeBlock: View {
       .lineSpacing(theme.type.codeLineSpacing)
       .foregroundStyle(theme.text.code.color)
       .textSelection(.enabled)
-      // A line height puts half the extra space above the first line and
-      // half below the last, where line spacing puts none.
+      // Line spacing adds nothing above the first line or below the last.
       .padding(.vertical, theme.type.codeLineSpacing / 2)
   }
 }
 
-/// A short command set on its own, with room to copy it: `/ctxscope` in the
-/// popover.
 public struct InlineCode: View {
   private let text: String
   @Environment(\.theme) private var theme
@@ -74,7 +62,7 @@ public struct InlineCode: View {
       .font(theme.type.codeLarge)
       .foregroundStyle(theme.text.primary.color)
       .textSelection(.enabled)
-      // SF Mono at 13 points has the line height SF Pro has.
+      // SF Mono at 13 points has SF Pro's line height.
       .line(theme.type.lines.body)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(theme.metrics.code.inlinePadding)

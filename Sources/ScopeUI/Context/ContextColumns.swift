@@ -1,7 +1,6 @@
 public import ScopeCore
 public import SwiftUI
 
-/// The Context page's main column: the four cards, the strip, and the blocks.
 public struct ContextMain: View {
   private let data: ContextPageData
   @Binding private var filter: BlockFilter
@@ -10,8 +9,6 @@ public struct ContextMain: View {
   private let hover: StripHover?
   @Environment(\.theme) private var theme
 
-  /// `hover` is where the pointer starts over the strip, for a picture of
-  /// its magnifier.
   public init(
     data: ContextPageData, filter: Binding<BlockFilter>, query: Binding<String>,
     selection: Binding<SegmentID?>, hover: StripHover? = nil
@@ -45,8 +42,6 @@ public struct ContextMain: View {
   }
 }
 
-/// The Context page's sidebar: the selected block's kind, name and facts, the
-/// start of its text, and what can be done with it.
 public struct ContextSidebar: View {
   private let inspector: InspectorData?
   private let noSelection: String
@@ -54,7 +49,6 @@ public struct ContextSidebar: View {
   private let onCopy: (String) -> Void
   @Environment(\.theme) private var theme
 
-  /// `onCopy` puts text on the pasteboard, which only the app can reach.
   public init(
     inspector: InspectorData?, noSelection: String,
     onShowInTimeline: @escaping (SegmentID) -> Void, onCopy: @escaping (String) -> Void
@@ -67,7 +61,6 @@ public struct ContextSidebar: View {
 
   public var body: some View {
     let page = theme.metrics.contextPage
-    // A long name and the text box can be taller than a short window.
     SidebarScroll {
       Group {
         if let inspector {

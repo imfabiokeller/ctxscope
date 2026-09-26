@@ -1,9 +1,6 @@
 internal import ScopeCore
 
-/// The sidebar's account of a block, and the words a block's use and a tool
-/// group are written with.
 extension ContextPresenter {
-  /// The Used column: yes, no, or not tracked.
   static func shortWord(_ use: BlockUse) -> String {
     switch use {
     case .used: "yes"
@@ -12,7 +9,6 @@ extension ContextPresenter {
     }
   }
 
-  /// The sidebar's Used fact: the word, and what it means.
   static func longWord(_ use: BlockUse) -> (word: String, meaning: String) {
     switch use {
     case .used: ("Yes", "later text reuses it word for word")
@@ -21,7 +17,6 @@ extension ContextPresenter {
     }
   }
 
-  /// "Built-in tools · 18 definitions", "github MCP · 26 tool definitions".
   static func title(of group: ToolGroup) -> String {
     switch group.server {
     case .builtIn: "Built-in tools · \(TokenFormat.plural(group.definitions, "definition"))"
@@ -71,7 +66,6 @@ extension ContextPresenter {
       textTitle: "Text", text: text, timelineTitle: "Show in timeline", copyTitle: "Copy text")
   }
 
-  /// Who or what put a block into the context, in a few plain words.
   static func origin(of segment: Segment, group: ToolGroup?, in analysis: LaneAnalysis) -> String {
     if let group, case .mcp(let id) = group.server {
       let server = id.map { "MCP server \($0)" } ?? "An MCP server"

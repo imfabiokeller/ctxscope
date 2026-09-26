@@ -1,10 +1,7 @@
 internal import Foundation
 
-/// A global key combination, as data.
-///
-/// The key code is the system's, because a global hotkey is registered by code
-/// and not by character: the same physical key is a different character on
-/// another layout, and the shortcut has to stay where the fingers are.
+/// Registered by key code, not character, so the shortcut stays on the same
+/// physical key on every layout.
 public struct Hotkey: Sendable, Equatable {
   public struct Modifiers: OptionSet, Sendable, Equatable {
     public let rawValue: Int
@@ -21,7 +18,6 @@ public struct Hotkey: Sendable, Equatable {
 
   public let keyCode: UInt32
   public let modifiers: Modifiers
-  /// What to show in a menu. The one place the shortcut is spelled out.
   public let label: String
 
   public init(keyCode: UInt32, modifiers: Modifiers, label: String) {
@@ -30,21 +26,12 @@ public struct Hotkey: Sendable, Equatable {
     self.label = label
   }
 
-  /// Control-option-command-C. 8 is the C key.
-  ///
-  /// A Carbon hotkey takes the combination from every app on the machine, so
-  /// the default has to be one nobody else uses. Option-command-C is Chrome's
-  /// inspect element, Finder's copy as pathname, Safari's console and VS
-  /// Code's match case. Adding control takes it out of all four.
+  /// 8 is the C key. Control is added because option-command-C is taken by
+  /// Chrome, Finder, Safari and VS Code, and a Carbon hotkey takes it from every app.
   public static let `default` = Hotkey(
     keyCode: 8, modifiers: [.command, .option, .control], label: "\u{2303}\u{2325}\u{2318}C")
 }
 
-/// Whatever can claim a key combination from the whole system.
-///
-/// A protocol because the thing that does it is Carbon, which needs a running
-/// application, and because what is claimed, and what happens when the system
-/// refuses, are checked against a registrar that only pretends to.
 @MainActor
 public protocol HotkeyRegistrar: AnyObject {
   func register(_ hotkey: Hotkey, action: @escaping () -> Void) throws

@@ -1,16 +1,9 @@
 public import SwiftUI
 
-/// The mark, drawn. One drawing, which the application turns into a menu bar
-/// image and the snapshot tool turns into a picture.
-///
-/// The ink is passed in rather than taken from a theme: the application
-/// draws it as a template image, whose color the system replaces with
-/// whatever the bar needs, so only its alpha matters there.
+/// The ink is passed in: as a template image only its alpha matters.
 public struct StatusBars: View {
   let face: StatusFace
   let ink: ThemeColor
-  /// The scale the filled bars are snapped to, so nothing is drawn across a
-  /// pixel boundary on the display it will be shown on.
   let scale: CGFloat
 
   public init(face: StatusFace, ink: ThemeColor, scale: CGFloat) {
@@ -19,7 +12,6 @@ public struct StatusBars: View {
     self.scale = scale
   }
 
-  /// An idle session is the same mark, quieter.
   public static let dimmedOpacity = 0.45
 
   public var body: some View {

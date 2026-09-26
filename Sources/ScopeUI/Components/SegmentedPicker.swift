@@ -1,18 +1,10 @@
 public import SwiftUI
 
-/// A segmented picker in two sizes: the window's view picker and a filter
-/// above a table.
-///
-/// Drawn rather than wrapped: AppKit's segmented control cannot take the
-/// theme's track, thumb and type, and it renders as an empty box offscreen.
-/// Each item is a native button, so keyboard focus works item by item, and
-/// the whole is presented to accessibility as a segmented `Picker`.
+/// Drawn: AppKit's segmented control cannot take the theme's track, thumb and
+/// type, and it renders as an empty box offscreen.
 public struct SegmentedPicker<Value: Hashable>: View {
   public enum Size: Sendable {
-    /// The window's view picker: 24 point items, 13 point titles, the
-    /// selected one in medium weight.
     case toolbar
-    /// A filter above a table: 22 point items, 12 point titles.
     case filter
   }
 

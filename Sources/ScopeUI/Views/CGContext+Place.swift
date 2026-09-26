@@ -1,14 +1,8 @@
 internal import CoreGraphics
 
 extension CGContext {
-  /// Puts an image into a rectangle of a context whose y runs down, which is
-  /// what SwiftUI hands over and what a plain Core Graphics bitmap is not. The
-  /// rectangle is flipped around for the draw and put back afterwards, or the
-  /// picture comes out standing on its head.
-  ///
-  /// Nothing is smoothed: a chart's image is either at the display's pixels
-  /// or in request space, and interpolating either turns a column boundary
-  /// into a smear.
+  /// Flips the rect, since SwiftUI's context runs y down and a bitmap does not.
+  /// No smoothing: interpolation would smear column boundaries.
   func place(_ image: CGImage, in rect: CGRect) {
     saveGState()
     interpolationQuality = .none

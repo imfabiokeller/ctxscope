@@ -1,21 +1,10 @@
 internal import SwiftUI
 
-/// Keyboard control of the window.
-///
-/// Left and right move the playhead, shift moves it further, up and down move
-/// the selection through the blocks alive at the playhead in reading order,
-/// and space toggles replay. A view nobody can drive without a pointer is a
-/// view half the people who need it cannot drive.
-///
-/// `.focusable()` on its own only takes focus when "Keyboard navigation" is on
-/// in System Settings, so focus is taken on appear through a FocusState. It is
-/// not taken again on a click: a click belongs to whatever was clicked, the
-/// filter field or the table, and the keys those leave alone still arrive
-/// here because this is their ancestor.
+/// `.focusable()` alone only takes focus with Keyboard navigation on in System
+/// Settings, so focus is taken on appear.
 struct PlayheadKeys: ViewModifier {
   let model: InstrumentModel
   @FocusState private var isFocused: Bool
-  /// How far shift moves the playhead.
   static let stride = 10
 
   func body(content: Content) -> some View {

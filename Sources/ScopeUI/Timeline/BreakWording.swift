@@ -1,10 +1,6 @@
 internal import Foundation
 internal import ScopeCore
 
-/// What a cache break's card says: a title for its cause and one or two
-/// sentences built from the facts `CacheAnalyzer` recorded. It says only what
-/// those facts carry: which block entered or left, how long the pause was,
-/// what was still read from the cache.
 struct BreakWording {
   let title: String
   let detail: String
@@ -44,7 +40,6 @@ struct BreakWording {
     }
   }
 
-  /// What was written again, from the kind of the last block still read.
   static func sentUncached(_ bust: CacheBust) -> String {
     switch bust.readThrough {
     case nil: "the whole context was sent uncached"
@@ -56,8 +51,6 @@ struct BreakWording {
     }
   }
 
-  /// "CLAUDE.md was edited": the first changed block, and whether it entered,
-  /// left, or did both.
   static func moved(_ change: PrefixChange?, fallback: String) -> String {
     guard let change else { return fallback + " changed" }
     let verb =
@@ -70,7 +63,6 @@ struct BreakWording {
     return "\(change.firstLabel) \(verb)"
   }
 
-  /// "The GitHub MCP server connected and added 26 tools (9.8k)."
   static func tools(_ change: PrefixChange?) -> String {
     guard let change else { return "The tool definitions changed." }
     let added = change.added.count
@@ -93,7 +85,6 @@ struct BreakWording {
     }
   }
 
-  /// "The model changed from a to b."
   static func models(_ bust: CacheBust, lane: Lane) -> String {
     let snapshots = lane.snapshots
     guard bust.parentRequest >= 0, bust.parentRequest < snapshots.count,
@@ -105,7 +96,6 @@ struct BreakWording {
       + "to \(snapshots[bust.request].model)."
   }
 
-  /// "6 minutes", "45 seconds", "2 hours".
   static func duration(_ seconds: Double) -> String {
     let whole = max(0, Int(seconds.rounded()))
     if whole < 90 { return TokenFormat.plural(whole, "second") }

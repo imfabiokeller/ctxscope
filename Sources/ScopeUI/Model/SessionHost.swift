@@ -2,18 +2,7 @@ internal import Foundation
 public import ScopeCapture
 public import ScopeCore
 
-/// Holds one open session off the main actor and answers in values.
-///
-/// Opening 08f59db8 takes about five seconds and analysing a lane takes tens
-/// of milliseconds. None of that may happen on the main thread, so the session
-/// itself lives here and the window only ever receives `Sendable` results.
-///
-/// A lane is analysed when it is shown, not when the session opens: feeding a
-/// judge for all fifty lanes of a large session costs hundreds of megabytes
-/// nobody asked for.
 public actor SessionHost {
-  /// What the window gets back: the recording, and the analysis of the lane it
-  /// is showing.
   public struct Loaded: Sendable {
     public let recording: Recording
     public let lane: LaneID
@@ -24,9 +13,6 @@ public actor SessionHost {
   private let feed: any SessionFeed
   private var open: (any OpenSession)?
   private var analyses: [LaneID: LaneAnalysis] = [:]
-  /// Every block's detail read so far, by lane, with the hash of the block it
-  /// was read for. A live lane gains blocks at every request, and reading the
-  /// ones it already had again would cost the whole file every time.
   private var details: [LaneID: [SegmentID: KnownDetail]] = [:]
 
   private struct KnownDetail {
@@ -41,8 +27,7 @@ public actor SessionHost {
   public func load(
     _ session: SessionRef, lane: LaneID = .main, hints: ModelWindowHints
   ) throws -> Loaded {
-    // The old session goes first. Holding it while the new one is read makes
-    // the peak two sessions, which on this machine is most of a gigabyte.
+    // The old session goes first: holding both while reading doubles peak memory.
     open = nil
     analyses = [:]
     details = [:]
@@ -53,7 +38,6 @@ public actor SessionHost {
     return try assemble(opened, lane: lane, hints: hints)
   }
 
-  /// Reads whatever the session has gained. Nil when it gained nothing.
   public func refresh(lane: LaneID, hints: ModelWindowHints) throws -> Loaded? {
     guard let open else { return nil }
     guard try open.refresh() else { return nil }
@@ -61,29 +45,20 @@ public actor SessionHost {
     return try assemble(open, lane: lane, hints: hints)
   }
 
-  /// Analyses a lane the first time it is shown.
   public func show(lane: LaneID, hints: ModelWindowHints) throws -> Loaded? {
     guard let open else { return nil }
     return try assemble(open, lane: lane, hints: hints)
   }
 
-  /// A block's recorded text, or nil when the transcript has none.
   public func text(of segment: SegmentID, lane: LaneID) -> String? {
     open?.content(of: segment, lane: lane)?.text
   }
 
-  /// The first line of every typed prompt of a lane, shortened, by the
-  /// prompt's block. Transcript text, read back here off the main actor the
-  /// way a block's text is, for the prompt rows to show and nothing to keep.
   public func promptLines(lane: LaneID) -> [SegmentID: String] {
     guard let open, let found = open.captured.recording.lane(lane) else { return [:] }
     return PromptLine.lines(of: found) { open.content(of: $0, lane: lane) }
   }
 
-  /// What every block of a lane is about, for the ones that say, by block.
-  /// Transcript text, read back here off the main actor like the prompt
-  /// lines. A block is read once: one whose slot now holds other content is
-  /// read again.
   public func blockDetails(lane: LaneID) -> [SegmentID: BlockDetail] {
     guard let open, let found = open.captured.recording.lane(lane) else { return [:] }
     var known = details[lane] ?? [:]

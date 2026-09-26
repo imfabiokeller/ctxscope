@@ -1,13 +1,6 @@
 internal import Foundation
 internal import ScopeCore
 
-/// The popover's content, from what the model holds now.
-///
-/// The popover shows the latest request. The model already holds the lane's
-/// analyses and the figures at the playhead, which is the latest request
-/// unless somebody moved it; only then are the figures worked out again for
-/// the latest one. The popover asks when it opens and when the model changes
-/// under it, never on a timer.
 @MainActor
 public enum PopoverSource {
   public static func content(

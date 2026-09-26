@@ -1,12 +1,8 @@
 public import SwiftUI
 
-/// A bordered box that groups what belongs together.
 public struct Card<Content: View>: View {
   public enum Style: Sendable {
-    /// A summary card on the window: a border, no face of its own, the
-    /// larger radius.
     case outlined
-    /// A card in the sidebar, such as a cache break's: a raised face.
     case raised
   }
 
@@ -15,8 +11,6 @@ public struct Card<Content: View>: View {
   private let content: Content
   @Environment(\.theme) private var theme
 
-  /// `fillsHeight` stretches the card to the height it is offered, the way
-  /// the cards of one row all take the height of the tallest.
   public init(
     _ style: Style = .raised, fillsHeight: Bool = false, @ViewBuilder content: () -> Content
   ) {
@@ -34,7 +28,6 @@ public struct Card<Content: View>: View {
     }
     .frame(maxWidth: .infinity, maxHeight: fillsHeight ? .infinity : nil, alignment: .topLeading)
     .padding(style == .outlined ? card.statPadding : card.infoPadding)
-    // The padding is inside the border.
     .padding(theme.metrics.hairline)
     .background {
       if style == .raised {
@@ -47,8 +40,6 @@ public struct Card<Content: View>: View {
   }
 }
 
-/// One of the summary cards: what it counts, the figure, and a line that
-/// says what the figure is made of.
 public struct StatCard: View {
   private let label: String
   private let figure: String
@@ -57,8 +48,6 @@ public struct StatCard: View {
   private let fillsHeight: Bool
   @Environment(\.theme) private var theme
 
-  /// `fillsHeight` is the card's: set it on a row of cards that should all
-  /// be as tall as the tallest.
   public init(
     label: String, figure: String, unit: String? = nil, detail: String, fillsHeight: Bool = false
   ) {
@@ -77,8 +66,7 @@ public struct StatCard: View {
       figureLine.tracking(type.figureTracking)
         .foregroundStyle(theme.text.primary.color)
         .lineLimit(1)
-      // The detail can wrap, so it cannot be framed to one line's height;
-      // the card gives the point back below it instead.
+      // Can wrap, so it is not framed to one line; the excess goes below.
       Text(detail).font(type.caption).foregroundStyle(secondary)
         .fixedSize(horizontal: false, vertical: true)
         .padding(.bottom, -type.captionExcess)
@@ -86,7 +74,6 @@ public struct StatCard: View {
     .accessibilityElement(children: .combine)
   }
 
-  /// The figure and its unit as one run of text, so they share a baseline.
   private var figureLine: Text {
     let figure = Text(self.figure + (unit == nil ? "" : " ")).font(theme.type.figure)
     guard let unit else { return figure }
@@ -96,8 +83,6 @@ public struct StatCard: View {
   }
 }
 
-/// A number in a small dark circle, which ties a mark on a chart to the card
-/// that explains it.
 public struct NumberBadge: View {
   private let label: String
   private let width: CGFloat?
@@ -108,8 +93,6 @@ public struct NumberBadge: View {
     width = nil
   }
 
-  /// A badge several numbers share, "3–4", as wide as `width`: a circle
-  /// stretched into a capsule.
   public init(_ label: String, width: CGFloat) {
     self.label = label
     self.width = width
@@ -121,8 +104,7 @@ public struct NumberBadge: View {
       .foregroundStyle(theme.status.onBadge.color)
       .frame(width: width ?? theme.metrics.badge, height: theme.metrics.badge)
       .background {
-        // A circle where the badge is round, which Core Graphics edges
-        // differently from a capsule of the same size.
+        // Core Graphics edges a circle differently from a capsule of the same size.
         if (width ?? theme.metrics.badge) > theme.metrics.badge {
           Capsule().fill(theme.status.badge.color)
         } else {

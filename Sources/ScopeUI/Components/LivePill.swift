@@ -1,7 +1,5 @@
 public import SwiftUI
 
-/// Says that the session is being written to right now: a green dot and a
-/// word in a pill, in the window's header.
 public struct LivePill: View {
   private let title: String
   @Environment(\.theme) private var theme
@@ -23,8 +21,6 @@ public struct LivePill: View {
   }
 }
 
-/// The same statement without the pill, where there is less room: the
-/// popover's first line.
 public struct StatusDot: View {
   private let title: String
   @Environment(\.theme) private var theme

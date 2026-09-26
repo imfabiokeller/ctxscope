@@ -1,23 +1,16 @@
 internal import Foundation
 internal import ScopeCore
 
-/// The rows of the blocks table at one request: one per block, except tool
-/// definitions, which are one row per server that offers them. Largest first.
 struct BlockTable {
-  /// A row with what the filters ask about, which the row itself does not
-  /// carry.
   private struct Entry {
     let row: BlockRowData
     let tokens: Int
-    /// Reading order position, which breaks ties between equal sizes.
     let position: Int
     let isPrefix: Bool
   }
 
   private let entries: [Entry]
-  /// Where each block sits in the request, in tokens.
   private let spans: [SegmentID: Range<Int>]
-  /// The row each block is listed under.
   private let rowOf: [SegmentID: Int]
   let groups: [SegmentID: ToolGroup]
 
@@ -46,7 +39,6 @@ struct BlockTable {
     self.entries = entries
   }
 
-  /// The rows a filter and a text filter leave, largest first.
   func rows(filter: BlockFilter, query: String) -> [BlockRowData] {
     let query = query.trimmingCharacters(in: .whitespaces)
     return
@@ -63,8 +55,6 @@ struct BlockTable {
       .map(\.row)
   }
 
-  /// The tokens a selection covers in this request: its own, or its whole
-  /// group's. Nil when it is not in the request.
   func span(of block: SegmentID) -> Range<Int>? {
     guard let row = rowOf[block] else { return nil }
     let members = entries[row].row.members.compactMap { spans[$0] }

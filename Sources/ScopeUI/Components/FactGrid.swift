@@ -1,8 +1,5 @@
 public import SwiftUI
 
-/// One fact on a solid tile, the prompt bands' look: a small label, the value
-/// on one line, and a quieter line under it when there is more to say. A
-/// fact about a block can lead with its kind's swatch and end with a figure.
 public struct FactTile: View {
   private let label: String
   private let value: String
@@ -32,8 +29,6 @@ public struct FactTile: View {
         .padding(.bottom, tile.labelGap)
       HStack(spacing: tile.valueGap) {
         if let swatch { KindSwatch(swatch) }
-        // A value never wraps: a long one loses its middle, where a path's
-        // folders are, and keeps both ends.
         Text(value).font(type.heading).foregroundStyle(theme.text.primary.color)
           .lineLimit(1).truncationMode(.middle)
           .layoutPriority(1)
@@ -58,8 +53,6 @@ public struct FactTile: View {
   }
 }
 
-/// Facts on tiles two to a row, a wide one on a row of its own. The tiles
-/// of a row are as tall as the taller of them.
 public struct FactGrid<Item: Identifiable, Tile: View>: View {
   private let items: [Item]
   private let isWide: (Item) -> Bool
@@ -81,7 +74,6 @@ public struct FactGrid<Item: Identifiable, Tile: View>: View {
       ForEach(Self.rows(of: items.count) { isWide(items[$0]) }, id: \.self) { row in
         HStack(alignment: .top, spacing: gap) {
           ForEach(row, id: \.self) { tile(items[$0]) }
-          // A narrow tile alone on its row keeps a narrow tile's width.
           if row.count == 1, !isWide(items[row[0]]) { Spacer().frame(maxWidth: .infinity) }
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -89,8 +81,6 @@ public struct FactGrid<Item: Identifiable, Tile: View>: View {
     }
   }
 
-  /// The items' positions, row by row: a wide item alone, narrow ones in
-  /// pairs in the order they come.
   nonisolated static func rows(of count: Int, isWide: (Int) -> Bool) -> [[Int]] {
     var rows: [[Int]] = []
     var pending: Int?

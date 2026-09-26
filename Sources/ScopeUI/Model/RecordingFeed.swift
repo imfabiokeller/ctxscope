@@ -2,11 +2,6 @@ internal import Foundation
 public import ScopeCapture
 public import ScopeCore
 
-/// A feed over recordings that are already in hand.
-///
-/// This is how the snapshot renderer and the tests drive the same views the
-/// app drives, with no transcript anywhere near them. It is production code
-/// because the synthetic recording is how the 1M token scale is shown at all.
 public struct RecordingFeed: SessionFeed {
   private let recordings: [Recording]
   private let judgeInputs: [String: [LaneID: JudgeInput]]
@@ -32,8 +27,6 @@ public struct RecordingFeed: SessionFeed {
         project: recording.project,
         url: URL(fileURLWithPath: "/dev/null"),
         title: recording.title,
-        // Newest first, and the first one counts as live so that following the
-        // active session picks it.
         lastActivity: Date(timeIntervalSince1970: Double(1_000_000 - index)),
         byteSize: 0,
         isLive: index == 0
@@ -55,7 +48,6 @@ public struct RecordingFeed: SessionFeed {
   }
 }
 
-/// One recording held open. Nothing grows, so a refresh has nothing to do.
 final class HeldRecording: OpenSession {
   let session: SessionRef
   let captured: CapturedSession

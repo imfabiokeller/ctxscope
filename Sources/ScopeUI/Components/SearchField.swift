@@ -1,11 +1,6 @@
 public import SwiftUI
 
-/// The filter field above a table: a glass, a prompt, and the text typed.
-///
-/// A native `TextField` without its own border, so editing, the insertion
-/// point and the keyboard are the system's; the frame is the theme's. A text
-/// field renders as an empty box offscreen, so under the renderer the field
-/// shows its text as plain text in the same place.
+/// A text field renders as an empty box offscreen, so the renderer gets plain text.
 public struct SearchField: View {
   private let label: String
   private let prompt: String
@@ -14,8 +9,6 @@ public struct SearchField: View {
   @Environment(\.theme) private var theme
   @Environment(\.isRendering) private var isRendering
 
-  /// `label` is what accessibility reads, `prompt` what the empty field
-  /// shows.
   public init(_ label: String, prompt: String = "Filter", text: Binding<String>) {
     self.label = label
     self.prompt = prompt
@@ -29,7 +22,6 @@ public struct SearchField: View {
     field
       .font(theme.type.caption)
       .foregroundStyle(theme.text.primary.color)
-      // The insets are inside the border.
       .padding(.leading, search.textInset + theme.metrics.hairline)
       .padding(.trailing, search.trailingInset + theme.metrics.hairline)
       .frame(width: search.width, height: search.height)
@@ -48,9 +40,8 @@ public struct SearchField: View {
       }
   }
 
-  /// The field, with the prompt laid under it while it is empty. The prompt
-  /// is drawn here rather than handed to the text field, because AppKit sets
-  /// a prompt in its own placeholder color whatever style it is given.
+  /// The prompt is drawn here: AppKit sets a text field prompt in its own
+  /// placeholder color whatever style it is given.
   private var field: some View {
     ZStack(alignment: .leading) {
       if text.isEmpty {
