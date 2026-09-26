@@ -60,6 +60,7 @@ struct StatusItemTests {
   @Test("the session going quiet fades, and the first picture does not")
   func crossFades() async throws {
     let (controller, model) = try await controller(live: true)
+    controller.reducesMotion = { false }
     let button = FakeButton()
     controller.refresh(on: button)
     #expect(button.fades == 0, "the first picture has nothing to fade from")
@@ -72,6 +73,18 @@ struct StatusItemTests {
     // And nothing changing changes nothing.
     controller.refresh(on: button)
     #expect(button.fades == 1)
+  }
+
+  @Test("with less motion asked for, the picture changes without a fade")
+  func reducedMotion() async throws {
+    let (controller, model) = try await controller(live: true)
+    controller.reducesMotion = { true }
+    let button = FakeButton()
+    controller.refresh(on: button)
+    model.liveness.clear()
+    controller.refresh(on: button)
+    #expect(button.draws == 2)
+    #expect(button.fades == 0)
   }
 
   @Test("a live session is the filled mark and its size")

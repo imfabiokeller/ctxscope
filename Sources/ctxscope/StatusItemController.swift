@@ -22,6 +22,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
   /// The picture on the bar now, which is what a cross-fade fades from.
   private var drawn: StatusFace?
 
+  /// Whether the person asked the system for less motion. Asked on every
+  /// change rather than once, because the setting can change while ctxscope
+  /// runs; a test answers it itself rather than inheriting the machine's.
+  var reducesMotion: () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
   var onOpenWindow: (() -> Void)?
   var onConnect: (() -> Void)?
   var onTurnOff: (() -> Void)?
@@ -103,7 +107,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     // drawing, because it is the drawing it fades.
     if StatusMotion.crossFades(
       from: drawn, to: face,
-      reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+      reduceMotion: reducesMotion())
     {
       button.crossFade(seconds: StatusMotion.seconds)
     }
