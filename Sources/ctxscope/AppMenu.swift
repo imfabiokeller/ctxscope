@@ -2,11 +2,6 @@ import AppKit
 import ScopeCore
 import ScopeUI
 
-/// The menu bar. Built here because the app has no scene to build it from,
-/// and because there has to be a way to quit whatever else is on screen.
-///
-/// There is no theme picker: dark and light follow the system. Export lives
-/// here rather than in the window.
 @MainActor
 enum AppMenu {
   static func install(export: @escaping (ExportFormat) -> Void, connect: @escaping () -> Void) {
@@ -37,7 +32,6 @@ enum AppMenu {
     return item
   }
 
-  /// Export, which used to be two buttons in the window's top bar.
   private static func fileMenu(export: @escaping (ExportFormat) -> Void) -> NSMenuItem {
     let item = NSMenuItem()
     let menu = NSMenu(title: "File")
@@ -69,13 +63,11 @@ enum AppMenu {
     return item
   }
 
-  /// A menu item keeps an unowned target, so the one that answers has to be
-  /// held for as long as the menu is.
+  // A menu item holds its target weakly, so these keep them alive.
   private static var exporter: ExportTarget?
   private static var connector: ConnectTarget?
 }
 
-/// What the Connect menu item does.
 @MainActor
 private final class ConnectTarget: NSObject {
   private let connected: () -> Void
@@ -89,7 +81,6 @@ private final class ConnectTarget: NSObject {
   }
 }
 
-/// What an export menu item does.
 @MainActor
 private final class ExportTarget: NSObject {
   private let exported: (ExportFormat) -> Void

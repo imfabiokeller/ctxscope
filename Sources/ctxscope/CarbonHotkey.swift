@@ -2,12 +2,8 @@ import AppKit
 import Carbon.HIToolbox
 import ScopeUI
 
-/// A global hotkey, claimed from the system.
-///
-/// Carbon's `RegisterEventHotKey` is the one way to take a key combination
-/// system wide without the accessibility permission a global event monitor
-/// needs. It claims one combination and gives it back, and that is all it
-/// does: what to claim, and what it opens, is decided by the application.
+// `RegisterEventHotKey` claims a key system wide without the accessibility permission
+// that a global event monitor needs.
 @MainActor
 final class CarbonHotkey: HotkeyRegistrar {
   enum Failure: Error, CustomStringConvertible {
@@ -23,8 +19,7 @@ final class CarbonHotkey: HotkeyRegistrar {
   private var reference: EventHotKeyRef?
   private var handler: EventHandlerRef?
   private var action: (() -> Void)?
-  /// Every registration of this process, by id, so the one C callback can
-  /// find the right action without a global.
+  // The C callback cannot capture context, so it finds the action by id.
   private static var actions: [UInt32: () -> Void] = [:]
   private static var nextID: UInt32 = 1
 
@@ -60,6 +55,7 @@ final class CarbonHotkey: HotkeyRegistrar {
     action = nil
   }
 
+  // "CTXS"
   private static let signature: OSType = 0x4354_5853
 
   private static let callback: EventHandlerUPP = { _, event, _ in

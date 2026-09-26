@@ -3,10 +3,6 @@ import ScopeConnect
 import ScopeUI
 import SwiftUI
 
-/// The small window the Connect item opens.
-///
-/// A window rather than a sheet: the instrument window is not always open, and
-/// the menu bar item has to be able to open this on its own.
 @MainActor
 final class ConnectWindowController: NSObject, NSWindowDelegate {
   private let window: NSWindow
@@ -25,7 +21,6 @@ final class ConnectWindowController: NSObject, NSWindowDelegate {
     window.delegate = self
   }
 
-  /// Called when the window has gone, so the app can let go of it.
   var onClose: (() -> Void)?
 
   func show(listening: UInt16?) {
