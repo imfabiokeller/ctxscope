@@ -37,7 +37,8 @@ open build/ctxscope.app
 ```
 
 `bundle.sh` builds the `ctxscope` product, copies the resource bundles (the
-themes) into `Contents/Resources`, writes `Info.plist` (bundle id, the
+themes) into `Contents/Resources`, compiles the app icon from
+`Resources/Assets.xcassets` with `actool`, writes `Info.plist` (bundle id, the
 `ctxscope://` URL scheme, `LSUIElement` so it runs as a menu bar app) and signs
 ad hoc, so it launches on the machine that built it. The version lives only in
 `bundle.sh` (`CFBundleShortVersionString`, `CFBundleVersion`).
