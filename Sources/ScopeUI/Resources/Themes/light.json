@@ -1,0 +1,102 @@
+{
+  "name": "light",
+  "appearance": "light",
+  "surface": {
+    "window": "#FFFFFF",
+    "header": "#F6F6F8",
+    "sidebar": "#F9F9FB",
+    "raised": "#FFFFFF",
+    "selection": "#E3EDFB",
+    "code": "#FFFFFF",
+    "inlineCode": "#EEF0F3",
+    "popover": "#FBFBFC",
+    "popoverFooter": "#F1F1F4",
+    "tile": "#EDEFF2"
+  },
+  "line": {
+    "hairline": "rgba(0,0,0,0.1)",
+    "divider": "rgba(0,0,0,0.08)",
+    "row": "rgba(0,0,0,0.05)",
+    "card": "rgba(0,0,0,0.09)",
+    "toolbarControl": "rgba(0,0,0,0.12)",
+    "control": "rgba(0,0,0,0.14)",
+    "popover": "rgba(0,0,0,0.14)"
+  },
+  "text": {
+    "primary": "#1D1D1F",
+    "supporting": "#3A3A3E",
+    "secondary": "#5F5F64",
+    "tertiary": "#6E6E73",
+    "disabled": "#B0B0B5",
+    "code": "#2B2B2F",
+    "unused": "#A0420F",
+    "link": "#0A5FD0",
+    "linkPressed": "#084BA6",
+    "onAccent": "#FFFFFF",
+    "failure": "oklch(0.55 0.2 27)"
+  },
+  "control": {
+    "fill": "#FFFFFF",
+    "pressed": "rgba(0,0,0,0.06)",
+    "track": "rgba(0,0,0,0.06)",
+    "thumb": "#FFFFFF",
+    "accent": "#0A5FD0",
+    "accentPressed": "#084BA6",
+    "focusRing": "rgba(10,95,208,0.5)"
+  },
+  "status": {
+    "liveFill": "#E7F6EC",
+    "liveInk": "#17692F",
+    "liveDot": "#1F9D45",
+    "badge": "#1D1D1F",
+    "onBadge": "#FFFFFF"
+  },
+  "shadow": {
+    "thumb": {
+      "color": "rgba(0,0,0,0.12)",
+      "x": 0,
+      "y": 1,
+      "blur": 2
+    },
+    "popover": {
+      "color": "rgba(0,0,0,0.22)",
+      "x": 0,
+      "y": 12,
+      "blur": 32
+    }
+  },
+  "kind": {
+    "system": "#4A5260",
+    "tools": "#7D8796",
+    "memory": "#B3BAC5",
+    "you": "#D9822B",
+    "agent": "#2F6FD0",
+    "results": "#8A63D2"
+  },
+  "chart": {
+    "track": "#EEF0F3",
+    "meterTrack": "#E4E7EB",
+    "blockGap": "#FFFFFF",
+    "gridStrong": "rgba(0,0,0,0.22)",
+    "gridFaint": "rgba(0,0,0,0.06)",
+    "marker": "#1D1D1F",
+    "bracket": "#5F5F64",
+    "phase": "#ECEEF1",
+    "phaseSelected": "#1D1D1F",
+    "phaseInk": "#3A3A3E",
+    "phaseInkSelected": "#FFFFFF",
+    "cost": "#8E8E93",
+    "costBreak": "#1D1D1F",
+    "spark": "#A9A1C9",
+    "sparkBreak": "#1D1D1F",
+    "dimmedOpacity": 0.42
+  },
+  "chrome": {
+    "windowBorder": "rgba(0,0,0,0.18)",
+    "close": "#FF5F57",
+    "minimize": "#FEBC2E",
+    "zoom": "#28C840",
+    "desktop": "#CFD5DD",
+    "menuBar": "rgba(255,255,255,0.72)"
+  }
+}
