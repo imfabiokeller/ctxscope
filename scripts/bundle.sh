@@ -1,7 +1,6 @@
 #!/bin/bash
-# Builds build/ctxscope.app from the package. No Xcode project: the app is the
-# executable plus the resource bundles SwiftPM produced, arranged the way
-# macOS expects to find them.
+# Builds build/ctxscope.app from the package, with no Xcode project.
+# Usage: scripts/bundle.sh [release|debug]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -16,8 +15,7 @@ rm -rf "$app"
 mkdir -p "$contents/MacOS" "$contents/Resources"
 cp "$binary/ctxscope" "$contents/MacOS/ctxscope"
 
-# Resource bundles hold the themes. Bundle.module finds them beside the
-# executable, so they go into Contents/Resources.
+# Bundle.module looks for the theme resource bundles in Contents/Resources.
 for bundle in "$binary"/*.bundle; do
   [ -e "$bundle" ] || continue
   cp -R "$bundle" "$contents/Resources/"
@@ -37,9 +35,7 @@ cat > "$contents/Info.plist" <<'PLIST'
   <key>CFBundleShortVersionString</key><string>0.1</string>
   <key>CFBundleVersion</key><string>3</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
-  <!-- An accessory from the first moment. Without this a launch through the
-       SessionStart hook flashes a Dock icon before the delegate sets the
-       policy, and the window still makes the app a regular one when it opens. -->
+  <!-- Without this a hook launch flashes a Dock icon before the delegate sets the policy. -->
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSHumanReadableCopyright</key><string>ctxscope</string>
@@ -56,8 +52,6 @@ cat > "$contents/Info.plist" <<'PLIST'
 PLIST
 
 printf 'APPL????' > "$contents/PkgInfo"
-# Ad hoc signature, so the app launches on the machine that built it without
-# anything being installed or trusted.
 codesign --force --sign - "$app" >/dev/null 2>&1 || true
 
 echo "built $app"

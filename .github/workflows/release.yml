@@ -11,15 +11,13 @@ jobs:
   release:
     runs-on: macos-26
     timeout-minutes: 45
-    # Creating the release and uploading its files is the only write, and
-    # only this job may do it.
+    # The only job allowed to write: it creates the release.
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          # The notes list the commits since the previous tag, which needs
-          # the history and the tags.
+          # The release notes need the full history and tags.
           fetch-depth: 0
       - uses: ./.github/actions/setup
       - name: Build, check the version, zip and checksum

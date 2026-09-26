@@ -42,8 +42,12 @@ Most of these are enforced by `scripts/check-architecture.sh`.
 - **Plain, neutral UI words**: size, reused, unused, carried, zone, and
   "block" for what the code calls a segment. No judgments, no metaphors, no
   em-dashes.
-- Match the naming and comment density of the code around you. Small commits,
-  one logical change each.
+- **No code comments unless truly necessary**: an open OS or framework bug
+  (name it), a non-obvious platform or API quirk, a deliberate choice that
+  looks like a bug, or a safety rule. Otherwise rename or extract until the
+  code says it.
+- Match the naming of the code around you. Small commits, one logical change
+  each.
 
 ## Adding a harness adapter
 

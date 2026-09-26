@@ -1,7 +1,6 @@
 #!/bin/bash
-# Drives connect, disconnect and doctor against a temporary Claude home and
-# checks what they do to the files. Nothing here goes near ~/.claude: every
-# run is given --claude-home.
+# Checks connect, disconnect and doctor against a temporary Claude home, never ~/.claude.
+# Usage: swift build && scripts/connect-cli.sh
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -27,7 +26,6 @@ printf '{\n  "model": "opus",\n  "permissions": {\n    "allow": ["Bash(git *)"]\
 chmod 600 "$home/settings.json"
 cp -p "$home/settings.json" "$home/original.json"
 
-# Without --yes and without a terminal, nothing is written.
 "$cli" connect --claude-home "$home" < /dev/null > /dev/null 2>&1
 check "no terminal and no --yes writes nothing" same \
   "$(cmp -s "$home/settings.json" "$home/original.json" && echo same || echo changed)"
@@ -66,7 +64,6 @@ check "the backup is gone" no \
 check "the skill is gone" no \
   "$([ -f "$home/skills/ctxscope/SKILL.md" ] && echo yes || echo no)"
 
-# A settings file ctxscope will not touch.
 printf '{\n  "model": "opus",\n}\n' > "$home/settings.json"
 cp -p "$home/settings.json" "$home/broken.json"
 "$cli" connect --claude-home "$home" --yes < /dev/null > "$home/refusal.txt" 2>&1

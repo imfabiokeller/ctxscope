@@ -50,7 +50,10 @@ input format.
 - UI language is plain and neutral: size, reused, unused, carried, zone, and
   "block" for what the code calls a segment. No judgments, no metaphors.
   ScopeCore keeps "referenced" internally.
-- Match comment density and naming of the surrounding code.
+- No code comments unless truly necessary: an open OS or framework bug (name
+  it), a non-obvious platform or API quirk, a deliberate choice that looks like
+  a bug, or a safety rule. Otherwise rename or extract until the code says it.
+- Match naming of the surrounding code.
 
 ## Git
 

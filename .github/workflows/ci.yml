@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    # Arm64, macOS 26, with Xcode 26 installed, which Package.swift needs.
+    # Package.swift needs Xcode 26.
     runs-on: macos-26
     timeout-minutes: 45
     steps:

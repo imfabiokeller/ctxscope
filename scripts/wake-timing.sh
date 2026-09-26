@@ -1,11 +1,6 @@
 #!/bin/bash
-# What the SessionStart hook costs a Claude session, measured both ways: with
-# ctxscope already running, and with it having to start.
-#
-# It runs the exact command the hook runs. Nothing here goes near ~/.claude:
-# the hook entry is not installed anywhere, the command is simply run. It
-# refuses to run while a ctxscope is up, because stopping somebody else's is
-# not this script's to do.
+# Times the SessionStart hook's command, cold and warm, without touching ~/.claude.
+# Usage: scripts/bundle.sh && scripts/wake-timing.sh (quit any running ctxscope first)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -14,8 +9,7 @@ app="build/ctxscope.app"
 
 command="open -g ctxscope://wake --args --woken || true"
 
-# Timed inside one process, because starting a second one to read the clock
-# costs more than the command being measured.
+# Timed in one process: spawning another to read the clock costs more than the command.
 took() {
   python3 - "$command" <<'TIMER'
 import subprocess, sys, time
@@ -25,16 +19,13 @@ print(round((time.monotonic_ns() - started) / 1e6, 1))
 TIMER
 }
 
-# Never stop a ctxscope somebody else started. If one is running this check
-# does not run at all, and says so, rather than taking it away from whoever
-# is using it.
+# Never stop a ctxscope somebody else started: refuse to run instead.
 running() { pgrep -f "ctxscope.app/Contents/MacOS/ctxscope" 2>/dev/null; }
 if [ -n "$(running)" ]; then
   echo "a ctxscope is already running, so this check did not run"
   echo "quit it first if you want to run it"
   exit 2
 fi
-# Nothing was running, so everything this finds from here on is this script's.
 ours=""
 stop() { [ -n "$ours" ] && kill "$ours" 2>/dev/null; }
 wait_for_ours() {
@@ -57,8 +48,6 @@ sleep 1
 [ "$(front)" = "$before" ] \
   && echo "  the front application did not change" \
   || echo "  FAIL the front application changed"
-# An accessory has no Dock icon and is not in the visible process list. The
-# window would put it there, because opening one makes the app a regular one.
 lsappinfo visibleProcessList 2>/dev/null | grep -q "ctxscope" \
   && echo "  FAIL ctxscope showed a dock icon or a window" \
   || echo "  no dock icon and no window"

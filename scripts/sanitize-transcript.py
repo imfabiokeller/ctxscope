@@ -1,27 +1,6 @@
 #!/usr/bin/env python3
-"""Turn a real Claude Code transcript into a fixture.
-
-Structure is kept exactly: entry order, parent links, request grouping, usage
-numbers, attachment types, content block shapes, and the length in characters
-of every piece of text. Text itself is replaced with filler.
-
-The filler is a function of a hash of the original, so two identical pieces of
-text stay identical and the duplication analyzer still has something to find,
-while nothing of the original can be read back out of it.
-
-Usage:
-    scripts/sanitize-transcript.py INPUT OUTPUT [--tail N]
-
-`--tail N` keeps only the last N entries, which is how a long session is cut
-down to fixture size. Chains that run off the start are exactly what a
-partially read transcript looks like, so the adapter has to cope anyway.
-
-Identifiers are remapped, not kept: uuids, session, request, message and tool
-use ids, thinking signatures and the connector id inside an MCP tool name all
-become stable fakes of the same shape, so every relation between entries
-survives and nothing points back at a real session or account. Timestamps are
-shifted by a fixed offset, which keeps order and gaps.
-"""
+# Turns a real transcript into a fixture: structure and text lengths kept, text and ids replaced.
+# Usage: scripts/sanitize-transcript.py INPUT OUTPUT [--tail N]
 
 import argparse
 import hashlib
@@ -34,7 +13,6 @@ WORDS = (
     "xray yankee zulu"
 ).split()
 
-# Fields that are structure, not content, and are copied through untouched.
 KEEP = {
     "type", "subtype", "role", "isSidechain", "userType", "entrypoint", "version",
     "usage", "input_tokens", "output_tokens", "cache_creation_input_tokens",
@@ -46,20 +24,13 @@ KEEP = {
     "index", "size",
 }
 
-# `kind` is structure in exactly one place: it says whether a category of the
-# `/context` report is in the context at all. Everywhere else it is a word
-# somebody wrote, so it is filler like any other. Only the four values the
-# report uses are copied through, and only there.
+# `kind` is structure only in a `/context` category row; everywhere else it is filler.
 CONTEXT_KINDS = {"used", "deferred", "buffer", "free"}
 
-# `origin.kind` says who put a user turn there. A background task's report is
-# not a prompt the person typed, and the adapter tells the two apart by it, so
-# the values it acts on are copied through. Any other value is filler.
+# The adapter reads these `origin.kind` values; any other value is filler.
 ORIGIN_KINDS = {"human", "task-notification"}
 
-# Identifiers: structure, but they name a real session, request or account, so
-# each distinct value is remapped to a stable fake of the same shape. Relations
-# between entries survive because the mapping is one to one.
+# These name a real session or account, so each is remapped one to one to a fake.
 IDENTIFIERS = {
     "uuid", "parentUuid", "logicalParentUuid", "sessionId", "requestId", "id",
     "tool_use_id", "agentId", "promptId", "leafUuid", "messageId",
@@ -69,18 +40,13 @@ IDENTIFIERS = {
     "backgroundTaskId", "taskId", "signature",
 }
 
-# Lists whose elements are identifiers rather than text.
 IDENTIFIER_LISTS = {"uuids", "allUuids", "retractedMessageUuids"}
 
-# Harness vocabulary rather than content: tool names and the like, which the
-# adapter maps onto bands and which a fixture therefore has to keep. MCP tool
-# names carry a connector id that belongs to one account, so those are rewritten
-# while the shape that decides the band is kept.
+# Kept because the adapter maps them onto bands; an MCP connector id is still rewritten.
 VOCABULARY = {"name", "style", "agentType", "attachmentType", "toolName", "model"}
 
 MCP_PREFIX = "mcp__"
 
-# Anything that looks like a path gets a path-shaped replacement.
 PATHS = {
     "cwd", "file_path", "filePath", "path", "displayPath", "notebook_path",
     "outputFile", "planFilePath", "worktreePath", "scratchpadDirectory",
@@ -89,7 +55,6 @@ PATHS = {
 
 
 def filler(text):
-    """Filler of exactly len(text) characters, stable for a given input."""
     if not text:
         return text
     seed = int(hashlib.blake2b(text.encode("utf-8"), digest_size=8).hexdigest(), 16)
@@ -111,7 +76,7 @@ def filler(text):
 
 
 def fake_identifier(value, counter={}, seen={}):
-    """A stable fake of the same shape. A uuid stays a uuid, a hex id stays hex."""
+    # The mutable defaults are deliberate: they memoize the mapping for the whole run.
     if value in seen:
         return seen[value]
     index = counter.get("n", 0) + 1
@@ -129,7 +94,6 @@ def fake_identifier(value, counter={}, seen={}):
 
 
 def fake_tool_name(name):
-    """Keeps the mcp__ shape and the verb, drops the connector id."""
     if not name.startswith(MCP_PREFIX):
         return name
     parts = name.split("__")
@@ -140,7 +104,6 @@ def fake_tool_name(name):
 
 
 def shift_timestamp(value):
-    """Moves every timestamp by the same offset, so gaps and order survive."""
     if not value or not value[0].isdigit() or "T" not in value:
         return value
     try:
@@ -159,10 +122,7 @@ def scrub(value, key=None, category=False):
     if isinstance(value, dict):
         if key == "origin" and value.get("kind") in ORIGIN_KINDS:
             return {k: (v if k == "kind" else scrub(v, k)) for k, v in value.items()}
-        # A row of the report's category table, which is the one place `kind`
-        # means what the reader of the report needs it to mean.
         row = category and "kind" in value and "tokens" in value
-        # Keys can be paths too, as in a file history snapshot.
         return {
             (fake_path(k) if k.startswith("/") else k): scrub(
                 v, k, category=(k == "categories") or (row and k == "kind")
@@ -189,7 +149,7 @@ def scrub(value, key=None, category=False):
             return value
         if key in PATHS:
             return fake_path(value)
-        # Everything else is content until proven otherwise.
+        # Unknown fields are treated as content, so nothing real leaks through.
         return filler(value)
     return value
 

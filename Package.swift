@@ -16,8 +16,6 @@ let package = Package(
   targets: [
     .target(name: "ScopeCore", swiftSettings: strict),
     .target(name: "ScopeCapture", dependencies: ["ScopeCore"], swiftSettings: strict),
-    // Connect edits the harness's settings and listens for its hook events.
-    // It owns no domain types, so it depends on nothing.
     .target(name: "ScopeConnect", swiftSettings: strict),
     .target(
       name: "ScopeUI",
@@ -49,11 +47,7 @@ let package = Package(
       swiftSettings: strict
     ),
     .testTarget(name: "ScopeUITests", dependencies: ["ScopeUI"], swiftSettings: strict),
-    // The status item, its image, the launch decisions and the shortcut live
-    // in the app target, so what can be tested about them is tested here.
     .testTarget(name: "ctxscopeTests", dependencies: ["ctxscope"], swiftSettings: strict),
-    // The demo generator lives in the CLI, and what it writes is checked by
-    // reading it back through the adapter.
     .testTarget(
       name: "ctxscope-cliTests",
       dependencies: ["ctxscope-cli", "ScopeCapture", "ScopeCore"],
@@ -67,7 +61,6 @@ var strict: [SwiftSetting] {
     .swiftLanguageMode(.v6),
     .enableUpcomingFeature("ExistentialAny"),
     .enableUpcomingFeature("InternalImportsByDefault"),
-    // A warning is something nobody has decided about yet. The gate decides.
     .treatAllWarnings(as: .error),
   ]
 }
