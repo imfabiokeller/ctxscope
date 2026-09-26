@@ -1,8 +1,6 @@
 import Foundation
 
-/// The retry code the demo session works on, and its tests.
 extension DemoSources {
-  /// Error codes the policy retries, with the reason written beside each.
   static let transientCodes: [(String, String)] = [
     ("ECONNRESET", "the server closed the connection mid request"),
     ("ECONNREFUSED", "nothing listening yet, usually a deploy in progress"),
@@ -247,7 +245,6 @@ extension DemoSources {
       """
   }
 
-  /// The policy object the refactor introduces.
   static let policy = """
     \(imports(["{ RetryPolicy } from './retry'", "{ ROUTE_POLICY } from './retry'"]))
 

@@ -1,7 +1,5 @@
 import Foundation
 
-/// The two subagent runs of the demo session: one maps the retry path while
-/// the first prompt is answered, one chases the flaky test.
 enum DemoAgents {
   static func explore(_ p: DemoProject) -> DemoAgent {
     DemoAgent(

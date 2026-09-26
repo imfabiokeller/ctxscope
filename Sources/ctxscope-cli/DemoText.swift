@@ -1,7 +1,5 @@
 import Foundation
 
-/// The prose of the demo: memory files, what the harness attaches, what a web
-/// page and the subagents report. All of it written for the demo.
 enum DemoText {
   static let userMemory = """
     # Personal preferences
@@ -13,7 +11,6 @@ enum DemoText {
     - Keep answers short. No summaries of what I just said.
     """
 
-  /// The project's CLAUDE.md as the session starts.
   static let projectMemory = """
     # api-client
 
@@ -92,7 +89,6 @@ enum DemoText {
 
       """
 
-  /// The same file after the person added a section for the new rules.
   static let projectMemoryEdited =
     projectMemory + """
       ## Retries
@@ -119,7 +115,6 @@ enum DemoText {
     e2a6f05 errors: map 425 to a transient kind
     """
 
-  /// A summary a fetch returns, in the fetch tool's voice.
   static let mathRandom = """
     The page documents `Math.random()`. Summary of what matters for retry delays:
 
@@ -211,7 +206,6 @@ enum DemoText {
     it through `fakeClock({ random })` would make the bad case reproducible.
     """
 
-  /// The thinking summary in front of the tests for the cap.
   static let plan = """
     Plan for the jitter cap tests. The cap has to apply to total elapsed time, not per \
     attempt. Options: track a deadline in the loop, or compute the remaining budget before \

@@ -1,11 +1,8 @@
 import Foundation
 
-/// The folder the demo session runs in, and the calls it makes there, each
-/// with the result and the record the harness writes beside it.
 struct DemoProject {
   let home: String
   let cwd: String
-  /// The session's date, the way the harness attaches it.
   let today: String
 
   func path(_ relative: String) -> String { cwd + "/" + relative }
@@ -99,7 +96,6 @@ struct DemoProject {
       agent: run)
   }
 
-  /// A file the way Read shows it: every line behind its number and a tab.
   static func numbered(_ content: String, from first: Int = 1) -> String {
     var lines = content.split(separator: "\n", omittingEmptySubsequences: false)
     if content.hasSuffix("\n") { lines.removeLast() }

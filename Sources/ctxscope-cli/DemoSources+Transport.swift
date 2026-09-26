@@ -1,7 +1,5 @@
 import Foundation
 
-/// The demo project's transport: fetch, a scripted fake for tests, and the
-/// helpers around them.
 extension DemoSources {
   static let transport: String =
     transportHead + statuses.map { "  \($0.0): '\($0.1)',\n" }.joined() + transportTail

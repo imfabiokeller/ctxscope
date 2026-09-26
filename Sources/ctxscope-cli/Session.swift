@@ -2,7 +2,6 @@ import Foundation
 import ScopeCapture
 import ScopeCore
 
-/// Shared loading, so every command opens a session the same way.
 enum Loader {
   static func adapter(_ arguments: Arguments) -> ClaudeCodeAdapter {
     ClaudeCodeAdapter(contextWindow: arguments.integer("window"))
@@ -20,7 +19,6 @@ enum Loader {
     return (session, captured)
   }
 
-  /// One judge per lane, fed that lane's input.
   static func references(_ captured: CapturedSession, _ lane: Lane) -> ReferenceReport {
     var judge = LexicalJudge(segmentShingleCap: CapturedSession.segmentShingleCap)
     if let input = captured.judgeInputs[lane.id] { judge.add(input) }

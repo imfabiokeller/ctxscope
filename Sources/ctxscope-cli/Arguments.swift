@@ -1,11 +1,7 @@
 import Foundation
 import ScopeCore
 
-/// A small argument reader. No third-party packages in phases 1 to 3, and the
-/// CLI has four commands, so this is all it needs.
 struct Arguments {
-  /// Flags that take a value. Everything else is a switch, so `validate
-  /// --json <id>` reads the id as the id rather than as the value of --json.
   static let valued: Set<String> = [
     "lane", "at", "format", "out", "window", "limit", "project", "requests", "seed",
     "capture-requests", "port", "claude-home", "home", "live", "start",
@@ -50,9 +46,6 @@ struct Arguments {
 
   func integer(_ name: String) -> Int? { flags[name].flatMap(Int.init) }
 
-  /// A request number a person typed, which counts from one. Anything else is
-  /// said out loud rather than quietly clamped: `--at 0` used to mean the
-  /// first request and `--at fish` used to mean the last.
   func requestNumber(_ name: String) throws -> Int? {
     guard let text = flags[name] else { return nil }
     guard let value = Int(text), value >= 1 else {
@@ -77,7 +70,6 @@ enum CLIError: Error, CustomStringConvertible {
   }
 }
 
-/// stdout and stderr, kept in one place so nothing prints from a library.
 enum Console {
   static func out(_ text: String) {
     print(text)

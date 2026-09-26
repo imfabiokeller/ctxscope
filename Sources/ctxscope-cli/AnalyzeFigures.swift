@@ -1,17 +1,13 @@
 import ScopeCore
 
-/// The figures the window's readout, blocks table and timeline show, worked
-/// out by the same analyzers, so they can be checked on real data from the
-/// command line. No transcript text: a task is named by its number.
+// Privacy: no transcript text here, a task is named by its number.
 struct WindowFigures: Encodable {
   struct Break: Encodable {
     let bust: CacheBust
-    /// Dollars the break added: rewritten tokens at write minus read.
     let extra: Double
   }
 
   let request: Int
-  /// Tokens per kind at the request, and the untyped remainder.
   let kinds: [String: Tokens]
   let untyped: Tokens
   let prefixTokens: Tokens
@@ -49,8 +45,6 @@ struct WindowFigures: Encodable {
     toolGroups = ToolGroupAnalyzer.run(lane, findings: findings, at: request)
   }
 
-  /// The lines `analyze` prints. Requests are numbered from one, as a person
-  /// reads them.
   var lines: [String] {
     var lines: [String] = []
     lines.append(

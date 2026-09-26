@@ -2,12 +2,6 @@ import Foundation
 import ScopeCapture
 import ScopeCore
 
-/// Refits the estimator prior from the sessions on this machine, so the
-/// numbers in `EstimatorRates.prior` are reproducible rather than something a
-/// script once printed.
-///
-/// The fit pools the normal equations of every lane, which is the same
-/// arithmetic each lane does for itself, only over more deltas.
 enum CalibrateCommand {
   static func run(_ arguments: Arguments) throws {
     let adapter = Loader.adapter(arguments)

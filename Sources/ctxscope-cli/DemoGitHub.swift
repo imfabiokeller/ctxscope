@@ -1,7 +1,5 @@
 import Foundation
 
-/// What git and the GitHub server answer in the demo session. The repository,
-/// the people and the numbers are made up.
 enum DemoGitHub {
   static let changed = """
      M CHANGELOG.md

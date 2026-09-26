@@ -1,17 +1,14 @@
 import Foundation
 import ScopeCapture
 
-/// Where the demo session goes in a home, and its files, request by request.
 struct DemoSession {
-  /// Requests written at once in a live run. The rest follow one at a time,
-  /// starting with the one after the six minute pause.
+  // The live run starts with the request after the six minute pause.
   static let liveBatch = 41
 
   let home: URL
   let project: DemoProject
   let session: String
 
-  /// The session in `home`, dated `day`.
   init(home: URL, day: Date) {
     self.home = home
     let formatter = DateFormatter()
@@ -29,20 +26,16 @@ struct DemoSession {
 
   var transcript: URL { folder.appending(path: "\(session).jsonl") }
 
-  /// Bytes for one file, due at a moment. A transcript line is appended; a
-  /// meta file is written whole.
   struct Chunk {
     let url: URL
     let data: Data
     let appends: Bool
     let due: Date
-    /// The main lane request it belongs to.
     let request: Int
   }
 
   var gaps: [Double] { DemoStory.turns(project).map(\.gap) }
 
-  /// Everything the session writes, in the order it is written.
   func chunks(_ schedule: DemoSchedule) throws -> [Chunk] {
     var main = DemoLane(session: session, cwd: project.cwd, agentID: nil, prefix: .main())
     let title = try JSONLines.line([
@@ -56,8 +49,8 @@ struct DemoSession {
         chunks += try subagent(run, at: times, request: index)
       }
       var lines = try entries.map(JSONLines.line)
-      // The harness writes the title again as the file grows, so it stays
-      // in the tail where it is looked for.
+      // The harness repeats the title as the file grows, so it stays in the
+      // tail where it is looked for.
       if turn.inputs.contains(where: \.isPrompt) { lines.append(title) }
       chunks.append(
         Chunk(
@@ -67,7 +60,6 @@ struct DemoSession {
     return chunks
   }
 
-  /// A subagent run: its lane, and the meta file that links it to the call.
   private func subagent(_ run: DemoLane.Spawned, at times: DemoTimes, request: Int) throws
     -> [Chunk]
   {
@@ -96,10 +88,6 @@ struct DemoSession {
     ]
   }
 
-  /// Writes the chunks, waiting for each one's moment from `liveFrom` on.
-  /// Before that, and in a run that is not live, everything is written at
-  /// once.
-  /// `batched` is called once the requests before `liveFrom` are on disk.
   func write(_ chunks: [Chunk], liveFrom: Int? = nil, batched: () -> Void = {}) throws {
     try? FileManager.default.removeItem(at: transcript)
     try? FileManager.default.removeItem(at: folder.appending(path: session))

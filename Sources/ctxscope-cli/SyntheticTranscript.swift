@@ -1,14 +1,6 @@
 import Foundation
 import ScopeCore
 
-/// Writes a transcript that looks like a real one: the same entry types, the
-/// same responses streamed as several entries, the same parallel tool calls
-/// with their results parented to their own call, and the same order of
-/// magnitude of text.
-///
-/// The bench needs it because capture, not analysis, is what costs seconds on
-/// a real session, and no real transcript may be copied into the repo to
-/// measure against.
 enum SyntheticTranscript {
   struct Shape {
     var requests: Int
@@ -20,7 +12,6 @@ enum SyntheticTranscript {
   static let realistic = Shape(
     requests: 400, parallelEvery: 3, resultCharacters: 6000, thinkingCharacters: 1200)
 
-  /// Returns the number of lines written.
   @discardableResult
   static func write(_ shape: Shape, to url: URL) throws -> Int {
     var lines: [Data] = []
@@ -70,8 +61,6 @@ enum SyntheticTranscript {
         parent = "u\(id)"
       }
 
-      // A result is parented to its own call, which is what puts every
-      // sibling off the parent chain.
       let last = parent
       for (index, id) in callIDs.enumerated() {
         let uuid = "res\(id)"
@@ -110,7 +99,6 @@ enum SyntheticTranscript {
     ]
   }
 
-  /// Deterministic filler of exactly `count` characters.
   private static func text(_ count: Int) -> String {
     let unit = "alpha bravo charlie delta echo foxtrot golf hotel india juliet "
     var out = ""

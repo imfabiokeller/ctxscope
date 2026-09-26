@@ -1,6 +1,5 @@
 import Foundation
 
-/// The demo project's small files.
 extension DemoSources {
   static let log = """
     const enabled = process.env.API_CLIENT_DEBUG === '1';
@@ -55,7 +54,6 @@ extension DemoSources {
         jest.spyOn(Math, 'random').mockImplementation(random);
       """)
 
-  /// The tests the demo session writes for the elapsed time cap.
   static let testElapsed = """
     \(imports(["{ withRetry, RetryPolicy } from '../src/api/retry'", "{ ScriptedTransport } from '../src/api/transport'", "{ fakeClock } from './helpers/clock'"]))
 

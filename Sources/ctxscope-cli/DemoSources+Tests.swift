@@ -1,6 +1,5 @@
 import Foundation
 
-/// The demo project's backoff tests.
 extension DemoSources {
   static let testBackoff: String =
     backoffHead + backoffCases.map(backoffCase).joined()

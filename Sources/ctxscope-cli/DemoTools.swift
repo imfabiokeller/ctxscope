@@ -1,8 +1,5 @@
 import Foundation
 
-/// The demo's tool definitions: the built-in set every request carries, and
-/// the GitHub server's, which connects part way through. Descriptions are
-/// written for the demo.
 enum DemoTools {
   typealias Property = (name: String, type: String, about: String)
 
@@ -128,8 +125,6 @@ enum DemoTools {
     ]
   }
 
-  /// One definition in the snapshot's shape. The schema is the record the
-  /// API is given.
   static func tool(
     _ name: String, _ summary: String, _ properties: [Property], required: [String]
   ) -> [String: Any] {
@@ -140,7 +135,6 @@ enum DemoTools {
     ]
   }
 
-  /// The longer usage notes the busiest tools carry.
   private static let notes: [String: String] = [
     "Agent": "Give the agent everything it needs: it does not see this conversation. Say what "
       + "to look for, where, what is already known, and what shape the report should take. "

@@ -2,8 +2,6 @@ import Foundation
 import ScopeCapture
 import ScopeCore
 
-/// What is in the context at one request, what it cost to carry, and how much
-/// of it was referenced. Every number carries its grade.
 enum AnalyzeCommand {
   static func run(_ arguments: Arguments) throws {
     let (session, captured) = try Loader.capture(arguments)
@@ -11,8 +9,6 @@ enum AnalyzeCommand {
     guard !lane.snapshots.isEmpty else {
       throw CLIError.usage("lane \(lane.id.rawValue) has no requests")
     }
-    // `--at` is the number a person reads off the window, which counts from
-    // one. Without it, the newest request.
     let at = min(
       try arguments.requestNumber("at") ?? (lane.snapshots.count - 1),
       lane.snapshots.count - 1)
@@ -41,8 +37,6 @@ enum AnalyzeCommand {
       "lane     \(lane.id.rawValue)"
         + (lane.agentType.map { " (\($0))" } ?? "")
         + ", \(lane.snapshots.count) requests, model \(lane.snapshots[at].model)")
-    // The label column already says what the number is, the way the window's
-    // footer does.
     Console.out("request  \(RequestNumber.counter(at, of: lane.snapshots.count))")
     Console.out("")
     Console.out(
@@ -154,9 +148,6 @@ enum AnalyzeCommand {
     }
   }
 
-  /// Where the split of the unobserved prefix came from, and how many blocks
-  /// each source is worth. The prior is four numbers somebody chose; a report
-  /// is the harness counting its own prompt.
   private static func prefixSource(_ lane: Lane) -> String {
     let blocks = lane.segments.filter {
       $0.born == 0 && BandRegistry.family(of: $0.band) == .prefix

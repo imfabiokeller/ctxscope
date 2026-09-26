@@ -1,6 +1,5 @@
 import Foundation
 
-/// Prompts 3 to 5: the failing tests, the memory edit, and jitter.
 extension DemoStory {
   static func policyFailure(_ name: String, _ line: Int) -> DemoOutput.Failure {
     DemoOutput.Failure(

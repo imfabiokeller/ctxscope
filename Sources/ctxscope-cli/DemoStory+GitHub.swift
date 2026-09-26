@@ -1,8 +1,6 @@
 import Foundation
 
-/// Prompts 8 and 9: the GitHub server connects, a pull request, its review.
 extension DemoStory {
-  /// A GitHub call's input: the repository, and `fields`.
   static func with(_ fields: [String: Any]) -> [String: Any] {
     fields.merging(["owner": "example", "repo": "api-client"]) { old, _ in old }
   }

@@ -1,8 +1,5 @@
 import Foundation
 
-/// The demo project's source files, written for the demo: a TypeScript client
-/// for a made-up billing API. Long files are built from the resource list, the
-/// way a real client of this shape repeats itself.
 enum DemoSources {
   static let resources = [
     "Account", "Invoice", "Payment", "Refund", "Customer", "Subscription", "Plan", "Coupon",
@@ -11,9 +8,8 @@ enum DemoSources {
 
   static func plural(_ resource: String) -> String { resource + "s" }
 
-  /// A TypeScript file's import lines. Built rather than written out, so no
-  /// line of this package starts with the word the architecture check reads
-  /// as a Swift import.
+  // Built, not written out, so no line here starts with the word the
+  // architecture check reads as a Swift import.
   static func imports(_ clauses: [String]) -> String {
     clauses.map { "import \($0);" }.joined(separator: "\n")
   }

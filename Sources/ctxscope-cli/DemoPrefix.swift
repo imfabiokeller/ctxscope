@@ -1,14 +1,9 @@
 import Foundation
 
-/// The part of the demo's prompt that is sent with every request: a system
-/// prompt and the tool definitions, recorded the way a `prompt_snapshot`
-/// records them. Written for the demo; it is not the harness's real text.
 struct DemoPrefix {
   let system: [String]
-  /// `{name, description, schema}`, the snapshot's shape.
   let tools: [[String: Any]]
 
-  /// The attachment that records it, in front of the first request.
   var snapshot: [String: Any] {
     [
       "type": "attachment",
@@ -19,8 +14,6 @@ struct DemoPrefix {
     ]
   }
 
-  /// What the adapter's estimator makes of it: each system block as prose,
-  /// each tool as its schema's compact JSON.
   var estimate: Double {
     let rates = DemoLane.rates
     let blocks = system.reduce(0.0) {
@@ -29,8 +22,6 @@ struct DemoPrefix {
     return tools.reduce(blocks) { $0 + Self.estimate(tool: $1) }
   }
 
-  /// What the last tool definition, the end of the part a cache break keeps,
-  /// is estimated at.
   var lastToolEstimate: Double { tools.last.map(Self.estimate(tool:)) ?? 0 }
 
   private static func estimate(tool: [String: Any]) -> Double {
@@ -42,7 +33,6 @@ struct DemoPrefix {
     DemoPrefix(system: systemPrompt, tools: DemoTools.builtIn)
   }
 
-  /// A subagent's: a shorter system prompt and the tools it may use.
   static func subagent(_ type: String) -> DemoPrefix {
     let allowed: Set<String> = ["Read", "Grep", "Glob", "Bash", "WebFetch"]
     return DemoPrefix(

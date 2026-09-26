@@ -1,6 +1,5 @@
 import Foundation
 
-/// The GitHub server's 26 tools, as the record a search loads them with.
 extension DemoTools {
   static let server = "github"
 

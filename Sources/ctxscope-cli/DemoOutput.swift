@@ -1,17 +1,12 @@
 import Foundation
 
-/// What the demo's commands print: test runs, searches, a diff. Built from the
-/// demo's own sources, so a test named in a run is a test that exists.
 enum DemoOutput {
-  /// One failing test in a run: its suite file, its full name, and the
-  /// explanation jest prints under it.
   struct Failure {
     let file: String
     let name: String
     let detail: String
   }
 
-  /// Test files and their test names, in the order jest runs them.
   static func suites(withElapsed: Bool) -> [(file: String, tests: [String])] {
     let sources = DemoSources.self
     var client: [String] = []
@@ -57,8 +52,6 @@ enum DemoOutput {
     return result
   }
 
-  /// An `npm test` run. `logs` is how many retry log lines jest echoes, which
-  /// is most of what makes a run long.
   static func npmTest(
     failures: [Failure] = [], verbose: Bool = false, logs: Int = 0, withElapsed: Bool = true,
     seconds: String = "4.812"
@@ -88,7 +81,6 @@ enum DemoOutput {
     return out
   }
 
-  /// One retry log line the way jest echoes a console call.
   private static func log(_ seed: Int) -> String {
     let resources = DemoSources.resources
     let codes = ["HTTP_503", "HTTP_429", "ECONNRESET", "HTTP_502", "ETIMEDOUT"]
@@ -107,7 +99,6 @@ enum DemoOutput {
       """
   }
 
-  /// The failure jest prints for the elapsed time cap.
   static let elapsedFailure = Failure(
     file: "tests/test_backoff.ts", name: "backoff › caps elapsed time",
     detail: """
@@ -125,8 +116,6 @@ enum DemoOutput {
             at Object.<anonymous> (tests/test_backoff.ts:239:29)
       """)
 
-  /// A search's output, `path:line:text`, cycling through made-up matches in
-  /// the project and in its dependencies until there are `count` of them.
   static func grep(_ word: String, count: Int) -> String {
     let places = [
       "src/api/retry.ts", "tests/test_backoff.ts", "docs/retries.md", "CHANGELOG.md",
@@ -157,7 +146,6 @@ enum DemoOutput {
     return lines.joined(separator: "\n")
   }
 
-  /// A whole new file as a diff adds it.
   static func added(_ path: String, _ content: String) -> String {
     var ids = DemoIDs(seed: path)
     let lines = content.split(separator: "\n", omittingEmptySubsequences: false).dropLast()

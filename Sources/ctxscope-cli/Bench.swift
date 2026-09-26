@@ -2,9 +2,6 @@ import Foundation
 import ScopeCapture
 import ScopeCore
 
-/// Times capture and every analyzer at scale. A 1M-token window is a
-/// first-class case, and capture is what actually costs seconds on
-/// a real session, so both are measured here.
 enum BenchCommand {
   static func run(_ arguments: Arguments) throws {
     try benchAnalysis(arguments)
@@ -67,9 +64,6 @@ enum BenchCommand {
     }
   }
 
-  /// Capture on a synthetic transcript of realistic size, cold and then
-  /// incremental, which is the number that decides whether following a live
-  /// session is affordable.
   private static func benchCapture(_ arguments: Arguments) throws {
     var shape = SyntheticTranscript.realistic
     if let requests = arguments.integer("capture-requests") { shape.requests = requests }
@@ -98,8 +92,6 @@ enum BenchCommand {
     Console.out(
       "  cold read          \(Timing.text(cold.seconds)) for \(cold.value) requests")
 
-    // Now the case that matters for following a session: read it once, append
-    // a little, read again.
     var capture = SessionCapture(session: reference, includeSubagents: false, window: nil)
     try capture.refresh()
     let tail = try String(contentsOf: url, encoding: .utf8)
@@ -120,7 +112,6 @@ enum BenchCommand {
   }
 }
 
-/// One place that times things and prints the number.
 enum Timing {
   struct Sample<Value> {
     let value: Value

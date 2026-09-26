@@ -1,6 +1,5 @@
 import Foundation
 
-/// Prompts 6 and 7: tests for the cap, and the flaky one.
 extension DemoStory {
   static let mdn =
     "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random"

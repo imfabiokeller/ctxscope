@@ -2,8 +2,6 @@ import Foundation
 import ScopeCapture
 import ScopeCore
 
-/// The bar every lane has to clear: request totals must equal API usage exactly, on every
-/// request, and the estimator residual is reported next to them.
 enum ValidateCommand {
   static func run(_ arguments: Arguments) throws {
     let (session, captured) = try Loader.capture(arguments)

@@ -1,7 +1,5 @@
 import Foundation
 
-/// `ctxscope demo`: writes a made-up session into a home of its own, for
-/// screenshots and recordings in which nothing private can appear.
 enum DemoCommand {
   static func run(_ arguments: Arguments) throws {
     guard let path = arguments.value("home") else {
@@ -10,9 +8,8 @@ enum DemoCommand {
     let given = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
     try refuseRealHome(given)
     try FileManager.default.createDirectory(at: given, withIntermediateDirectories: true)
-    // Written the way `NSHomeDirectory()` reports a `CFFIXED_USER_HOME` that
-    // exists, `/private/tmp` as `/tmp`, so the window shows the project as
-    // `~/code/api-client`.
+    // Standardized the way `NSHomeDirectory()` reports a `CFFIXED_USER_HOME`
+    // (`/private/tmp` as `/tmp`), so the window shows `~/code/api-client`.
     let home = URL(fileURLWithPath: (given.path as NSString).standardizingPath)
 
     let now = Date()
@@ -58,8 +55,7 @@ enum DemoCommand {
     Console.out("written     \(gaps.count) requests")
   }
 
-  /// The demo writes a `.claude` folder, so it never writes one into the
-  /// real home of the person running it, or into anything that holds it.
+  // Safety: the demo writes a `.claude` folder, never into the real home or anything holding it.
   private static func refuseRealHome(_ home: URL) throws {
     guard let entry = getpwuid(getuid()), let directory = entry.pointee.pw_dir else {
       throw CLIError.usage("cannot tell where your home is, so the demo writes nothing")

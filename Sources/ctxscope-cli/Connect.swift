@@ -1,19 +1,13 @@
 import Foundation
 import ScopeConnect
 
-/// `connect`, `disconnect` and `doctor`: the same three verbs the app's
-/// Connect panel has, for a terminal.
-///
-/// The home directory is a parameter. `--claude-home` is not in the usage
-/// text, because it exists so that a test never goes near the real one.
+// `--claude-home` is left out of the usage text: it exists so tests never touch the real home.
 enum ConnectCommand {
   static func home(_ arguments: Arguments) -> ClaudeHome {
     guard let path = arguments.value("claude-home") else { return .real() }
     return ClaudeHome(root: URL(fileURLWithPath: (path as NSString).expandingTildeInPath))
   }
 
-  /// The port to write into the hook URLs: whatever is already in the file,
-  /// so a running ctxscope keeps its listener, otherwise the default one.
   static func port(_ arguments: Arguments, service: ConnectService) -> UInt16 {
     if let asked = arguments.integer("port"), let value = UInt16(exactly: asked) { return value }
     return (try? service.status())?.port ?? HookWiring.defaultPort
@@ -32,9 +26,6 @@ enum ConnectCommand {
       nothingToDo: "nothing of ctxscope's to remove", done: "removed")
   }
 
-  /// Shows the diff and writes it. The settings file is read again first, and
-  /// a file that moved since the diff was worked out is worked out again
-  /// rather than written over.
   private static func run(
     _ change: ConnectService.Change, with service: ConnectService, arguments: Arguments,
     nothingToDo: String, done: String
@@ -66,8 +57,6 @@ enum ConnectCommand {
     if !report.isHealthy { exit(1) }
   }
 
-  /// Asked after the diff and before the write, the way the panel waits for a
-  /// click. `--yes` answers it, which is what a script has to pass.
   private static func agreed(_ arguments: Arguments) -> Bool {
     if arguments.has("yes") { return true }
     guard isatty(STDIN_FILENO) == 1 else {
@@ -81,8 +70,6 @@ enum ConnectCommand {
     return ["y", "yes"].contains(answer.trimmingCharacters(in: .whitespaces).lowercased())
   }
 
-  /// The diff, and what else the change touches. Shown before the write, the
-  /// same way the panel shows it.
   private static func show(_ plan: ConnectService.Plan) {
     let diff = plan.diff()
     if diff.isEmpty {

@@ -2,10 +2,7 @@ import Foundation
 import ScopeCapture
 import ScopeCore
 
-/// The recording and its metrics, as JSON or CSV. Labels can name files the
-/// session touched, so the output goes where the caller asks and nowhere
-/// else. The encoders themselves live in ScopeCore, because the window exports
-/// the same thing.
+// Privacy: labels can name files the session touched, so output goes only where asked.
 enum ExportCommand {
   static func run(_ arguments: Arguments) throws {
     let (session, captured) = try Loader.capture(arguments)

@@ -1,9 +1,6 @@
 import Foundation
 
-/// The demo session, request by request: 87 requests under 9 typed prompts, a
-/// memory edit at request 23, a pause of six minutes before request 42 and the
-/// GitHub server connecting at request 64. The snapshot tool's sample
-/// screens tell the same story.
+// The snapshot tool's sample screens tell this same story.
 enum DemoStory {
   static let title = "retry-policy"
 
@@ -24,19 +21,16 @@ enum DemoStory {
       + elapsed(project) + flaky(project) + github(project) + review(project)
   }
 
-  /// A request that only calls tools, after a short pause.
   static func step(
     _ calls: [DemoCall], thinking: String? = nil, tokens: Int = 0, gap: Double = 11
   ) -> DemoTurn {
     DemoTurn(thinking: thinking, thinkingTokens: tokens, calls: calls, gap: gap)
   }
 
-  /// The answer that ends a prompt's work.
   static func reply(_ text: String, thinking: String? = nil, tokens: Int = 0) -> DemoTurn {
     DemoTurn(thinking: thinking, thinkingTokens: tokens, text: text, gap: 16)
   }
 
-  /// The first request after a typed prompt.
   static func opening(
     _ number: Int, _ calls: [DemoCall], extra: [DemoInput] = [], thinking: String,
     tokens: Int, gap: Double = 70, cache: DemoCache = .warm

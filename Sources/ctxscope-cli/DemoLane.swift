@@ -1,20 +1,13 @@
 import Foundation
 import ScopeCore
 
-/// Turns the turns of one lane into transcript entries.
-///
-/// The usage of every request is worked out from the content that entered,
-/// with the same estimator the adapter sizes blocks with: the request before
-/// it, plus what the model produced, plus what arrived since, plus the framing
-/// the harness adds per request. So the adapter finds deltas it can explain,
-/// and the cache numbers break exactly where the story says they do.
 struct DemoLane {
   static let model = "claude-opus-5"
   static let rates = EstimatorRates.prior
-  /// Tokens a request sends without the cache: the few the harness appends
-  /// after the last breakpoint.
+  // The few tokens the harness appends after the last cache breakpoint.
   static let uncached = 3
-  /// How far under its recorded prefix the first request is put.
+  // Keeps the first request under its recorded prefix, so the adapter scales the
+  // recorded blocks instead of inventing a share for an unrecorded band.
   static let undershoot = 120
 
   let session: String
@@ -27,9 +20,7 @@ struct DemoLane {
   private var total = 0
   private var cachedAfter = 0
   private var output = 0
-  /// What the estimator says entered since the last request.
   private var pending = 0.0
-  /// What a request reads when only the system prompt and the tools survived.
   private var prefixRead = 0
 
   init(session: String, cwd: String, agentID: String?, prefix: DemoPrefix) {
@@ -40,16 +31,12 @@ struct DemoLane {
     ids = DemoIDs(seed: agentID ?? session)
   }
 
-  /// The Agent calls of a request, with the id the subagent's meta file
-  /// names.
   struct Spawned {
     let agent: DemoAgent
     let description: String
     let toolUseID: String
   }
 
-  /// The entries of one request: what arrived in front of it, the streamed
-  /// response, and the results of its calls.
   mutating func request(_ turn: DemoTurn, at times: DemoTimes) -> (
     entries: [[String: Any]], spawned: [Spawned]
   ) {
@@ -89,8 +76,6 @@ struct DemoLane {
       if block["type"] as? String == "tool_use", let uuid = parent { callEntries.append(uuid) }
     }
 
-    // Every result hangs off its own call, and the chain goes on from the
-    // last one: the shape `ChainExpansion` exists for.
     pending = 0
     var spawned: [Spawned] = []
     for (position, call) in turn.calls.enumerated() {
@@ -118,17 +103,11 @@ struct DemoLane {
     return (entries, spawned)
   }
 
-  /// The usage block of the next request, which also moves the lane's own
-  /// running totals on.
   private mutating func usage(for turn: DemoTurn) -> [String: Any] {
     let framing = Self.rates.tokensPerRequest
     if index == 0 {
-      // A little under what the recorded prefix is estimated at, so the
-      // adapter scales the recorded blocks rather than inventing a share for
-      // a band nothing recorded.
       total = Int((pending + framing + prefix.estimate).rounded()) - Self.undershoot
-      // Inside the last tool definition: everything up to it was read, and
-      // everything from the first block after it was not.
+      // Cut mid last tool definition: all before it was read, nothing after it.
       prefixRead = Int(prefix.estimate - prefix.lastToolEstimate / 2) - Self.undershoot
     } else {
       total += output + Int((pending + framing).rounded(.up))
@@ -160,7 +139,6 @@ struct DemoLane {
     ]
   }
 
-  /// An entry that continues the chain.
   private mutating func next(_ fields: [String: Any], at time: Date) -> [String: Any] {
     let uuid = ids.uuid()
     let entry = stamped(fields, uuid: uuid, parent: parent, at: time)
@@ -186,13 +164,11 @@ struct DemoLane {
     return entry
   }
 
-  /// What the adapter's estimator says a text costs.
   static func estimate(_ text: String) -> Double {
     rates.estimate(
       characters: text.unicodeScalars.count, contentClass: ContentClassifier.classify(text))
   }
 
-  /// A call's input the way the adapter sizes it: values only, keys sorted.
   static func compact(_ value: Any) -> String {
     switch value {
     case let text as String: text
@@ -204,7 +180,6 @@ struct DemoLane {
   }
 }
 
-/// Ids that look like the harness's and come out the same on every run.
 struct DemoIDs {
   private var state: UInt64
 
@@ -226,7 +201,7 @@ struct DemoIDs {
       .joined(separator: "-")
   }
 
-  /// SplitMix64.
+  // SplitMix64.
   private mutating func next() -> UInt64 {
     state &+= 0x9e37_79b9_7f4a_7c15
     var value = state
