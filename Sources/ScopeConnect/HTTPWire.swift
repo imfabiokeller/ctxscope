@@ -1,11 +1,8 @@
 package import Foundation
 
-/// One request off the wire.
 package struct HookRequest: Sendable, Equatable {
   package let method: String
   package let path: String
-  /// Header names lowercased, because a header name is not case sensitive and
-  /// a check that assumes otherwise is not a check.
   package let headers: [String: String]
   package let body: Data
 }
@@ -36,14 +33,7 @@ package enum HTTPRead: Sendable, Equatable {
   case refuse(HTTPStatus)
 }
 
-/// Just enough HTTP/1.1 to take a hook event and answer it.
-///
-/// A hook posts one small JSON body to one path on the loopback. Nothing here
-/// keeps a connection alive, follows a chunked body or negotiates anything:
-/// what arrives is read, answered and closed.
 package enum HTTPWire {
-  /// A hook payload is a few hundred bytes. Anything past this is not one, and
-  /// is refused rather than buffered.
   package static let bodyCap = 64 * 1024
   package static let headerCap = 8 * 1024
 
@@ -72,10 +62,7 @@ package enum HTTPWire {
       ))
   }
 
-  /// What a hook gets back. An empty JSON object is the documented way to say
-  /// "nothing to report": the reference reads a 2xx body with the same schema
-  /// a command hook's stdout uses, and an object with no fields in it asks for
-  /// nothing.
+  // An empty JSON object is the documented 2xx body that asks for nothing.
   package static func response(_ status: HTTPStatus) -> Data {
     let body = status == .ok ? "{}" : ""
     return Data(
@@ -95,9 +82,7 @@ package enum HTTPWire {
     return fields
   }
 
-  /// The length of the body, or nil when there is no length this can trust.
   private static func contentLength(_ fields: [String: String]) -> Int? {
-    // A body ctxscope cannot measure is a body it will not read.
     guard fields["transfer-encoding"] == nil else { return nil }
     guard let value = fields["content-length"] else { return 0 }
     guard let parsed = Int(value), parsed >= 0 else { return nil }

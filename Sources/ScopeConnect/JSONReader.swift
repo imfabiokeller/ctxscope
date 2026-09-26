@@ -1,12 +1,10 @@
 internal import Foundation
 
-/// The parser. Byte by byte, because every range it reports has to be a byte
-/// offset a splice can use.
+// Byte by byte: every range it reports must be a byte offset a splice can use.
 struct JSONReader {
   let bytes: [UInt8]
   var at = 0
-  /// How many containers are open. Counted rather than measured off the
-  /// stack, because the stack runs out without saying so.
+  // Counted, because running out of stack crashes without an error.
   var depth = 0
 
   func fail(_ what: String) -> JSONSpan.Invalid {
@@ -67,7 +65,6 @@ struct JSONReader {
       || byte == UInt8(ascii: "E")
   }
 
-  /// Opens a container, or refuses one too deep to be a settings file.
   private mutating func deepen() throws {
     depth += 1
     guard depth <= JSONSpan.depthLimit else {
@@ -142,8 +139,6 @@ struct JSONReader {
     }
   }
 
-  /// The string at the cursor, unescaped. Keys are compared against plain
-  /// names, so the escapes have to be gone before the comparison happens.
   private mutating func string() throws -> String {
     at += 1
     var out: [UInt8] = []
@@ -175,13 +170,7 @@ struct JSONReader {
     throw fail("the string is not closed")
   }
 
-  /// A `\u` escape, with the surrogate pair a character outside the basic
-  /// plane is written as.
-  ///
-  /// A lone surrogate, or a pair in the wrong order, is written by something
-  /// and accepted by `JSON.parse`, so it decodes to the replacement character
-  /// rather than throwing or trapping. The bytes in the file are not touched
-  /// either way: this string is only ever compared with a key name.
+  // A lone or misordered surrogate decodes to U+FFFD, since `JSON.parse` accepts it.
   private mutating func unicode() throws -> [UInt8] {
     let first = try hex()
     var scalar = UInt32(first)
@@ -194,8 +183,6 @@ struct JSONReader {
       if second >= 0xDC00, second <= 0xDFFF {
         scalar = 0x10000 + (UInt32(first - 0xD800) << 10) + (UInt32(second) - 0xDC00)
       } else {
-        // Not a low surrogate: the high one stands alone and the second
-        // escape is read again on its own.
         at = mark
         scalar = 0xFFFD
       }

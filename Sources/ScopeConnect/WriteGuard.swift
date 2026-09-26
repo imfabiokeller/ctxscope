@@ -1,16 +1,10 @@
 package import Foundation
 
-/// What ctxscope will not do to a settings file, in the words a person reads.
 package enum Refusal: Error, CustomStringConvertible, Equatable {
-  /// It is not JSON at all. The text says where.
   case notJSON(String)
-  /// It is JSON, but not an object, so it is not a settings file.
   case notAnObject
-  /// It parses here and not in Foundation: a NUL byte, bytes that are not
-  /// UTF-8, a lone surrogate, a number nothing else accepts.
   case notReadable
-  /// The same key twice. Claude Code reads the last one and ctxscope would
-  /// edit the first.
+  // Claude Code reads the last duplicate key and ctxscope would edit the first.
   case repeatedKey(String)
   case wouldNotBeReadable
   case wouldNotComeBack
@@ -43,19 +37,9 @@ package enum Refusal: Error, CustomStringConvertible, Equatable {
   }
 }
 
-/// The checks in front of every write.
-///
-/// Two jobs that are not editing, which is why they are not in `SettingsEdit`:
-/// deciding whether a file may be touched at all, and deciding whether what
-/// would go out is safe. Neither is asserted after the fact, so a file that
-/// would fail is never written.
 package enum WriteGuard {
-  /// The file as it stands, read the way ctxscope has to read it.
-  ///
-  /// The span parser goes first, because it is the one that can say which
-  /// line is wrong. Foundation goes second, because it is closer to what the
-  /// harness does. A key written twice is read one way here and the other way
-  /// there, and a file read two ways is a file that can be damaged.
+  // The span parser goes first to name the bad line; Foundation second, as it
+  // is closer to what the harness does.
   package static func check(readable data: Data) throws {
     let root: JSONSpan
     do {
@@ -72,13 +56,8 @@ package enum WriteGuard {
     (try? check(readable: data)) != nil
   }
 
-  /// What goes out has to be a file the harness reads, and taking ctxscope
-  /// back out of it has to give exactly the bytes that were there before
-  /// ctxscope wrote anything.
-  ///
-  /// The bytes it compares against are the file as it stands with our entries
-  /// taken out, which is the same file whether or not ctxscope has written to
-  /// it before.
+  // Safety: the harness must read the result, and removing ctxscope again must
+  // give back exactly the bytes from before.
   package static func check(_ current: Data?, backup: Data?, becomes next: Data) throws {
     guard isWellFormed(next) else { throw Refusal.wouldNotBeReadable }
     guard let current, !SettingsEdit.isBlank(current) else { return }
@@ -87,7 +66,6 @@ package enum WriteGuard {
     else { throw Refusal.wouldNotComeBack }
   }
 
-  /// The first key written twice, anywhere in the document.
   private static func repeatedKey(_ value: JSONSpan) -> String? {
     switch value.kind {
     case .object(let members):

@@ -1,20 +1,10 @@
 internal import Darwin
 internal import Foundation
 
-/// Asks whether ctxscope's listener is answering on a port.
-///
-/// A connection that opens is not enough: another program could be sitting on
-/// the port. The probe sends a GET to the hook path, which the listener
-/// answers with 405 and nothing else does, so the answer is about ctxscope
-/// rather than about the port.
-///
-/// A plain socket with a timeout rather than a framework and a callback: this
-/// is asked once, from a command that has nothing else to do while it waits.
 package enum HookProbe {
   package enum Answer: String, Sendable, Equatable {
     case listening
     case refused
-    /// Something is there, but it is not ctxscope.
     case foreign
   }
 
@@ -49,6 +39,7 @@ package enum HookProbe {
     let read = recv(handle, &answer, answer.count, 0)
     guard read > 0 else { return .foreign }
     let head = String(decoding: answer[0..<read], as: UTF8.self)
+    // Only ctxscope's listener answers a GET on the hook path with 405.
     return head.hasPrefix("HTTP/1.1 \(HTTPStatus.methodNotAllowed.rawValue) ")
       ? .listening : .foreign
   }

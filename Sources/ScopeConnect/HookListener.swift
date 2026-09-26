@@ -2,26 +2,13 @@ internal import Dispatch
 internal import Foundation
 internal import Network
 
-/// The listener Claude Code's HTTP hooks post to.
-///
-/// Bound to 127.0.0.1 and nothing else, so nothing off this machine can reach
-/// it. Reading and answering happen on a queue of the listener's own, never on
-/// the main one: a hook that had to wait for a frame to be drawn would be a
-/// hook that slows Claude down. Only the event itself crosses to the main
-/// actor, and only after the answer has gone out.
-///
-/// When ctxscope is not running the connection is refused at once, which the
-/// hooks reference calls a non-blocking error: the session carries on.
 @MainActor
 package final class HookListener {
-  /// Told about every event, after the answer has gone out.
   package var onEvent: ((HookEvent) -> Void)?
 
   package private(set) var port: UInt16?
 
   private var listener: NWListener?
-  /// How long a connection that says nothing is held. A hook posts its body at
-  /// once; anything that does not is a file descriptor held for nothing.
   private let idleSeconds: Double
   private nonisolated static let queue = DispatchQueue(label: "dev.fabiokeller.ctxscope.hooks")
 
@@ -29,11 +16,6 @@ package final class HookListener {
     self.idleSeconds = idleSeconds
   }
 
-  /// Binds a port and starts listening. The port it got, or nil when every one
-  /// it tried was taken.
-  ///
-  /// A port that is already in the settings file is asked for first, so
-  /// restarting ctxscope does not invalidate hooks that are already written.
   @discardableResult
   package func start(preferring wanted: UInt16? = nil) async -> UInt16? {
     stop()
@@ -55,8 +37,6 @@ package final class HookListener {
     port = nil
   }
 
-  // MARK: binding
-
   private func bind(_ candidate: UInt16) async -> NWListener? {
     guard let number = NWEndpoint.Port(rawValue: candidate) else { return nil }
     let parameters = NWParameters.tcp
@@ -68,13 +48,12 @@ package final class HookListener {
     }
     let bound = candidate
     let idle = idleSeconds
-    // Before `start`, not after: a listener started without a connection
-    // handler fails at once with "invalid argument" and takes no port.
+    // Before `start`: a listener started without a connection handler fails at
+    // once with "invalid argument" and takes no port.
     listener.newConnectionHandler = { connection in
       Self.accept(connection, port: bound, idle: idle, deliver: deliver)
     }
-    // An AsyncStream rather than a continuation: the state handler is called
-    // more than once, and a continuation may only be resumed once.
+    // An AsyncStream, not a continuation: the state handler fires more than once.
     let outcome = AsyncStream<Bool> { yield in
       listener.stateUpdateHandler = { state in
         switch state {
@@ -98,23 +77,17 @@ package final class HookListener {
     return listener
   }
 
-  // MARK: connections
-
   private nonisolated static func accept(
     _ connection: NWConnection, port: UInt16, idle: Double,
     deliver: @escaping @Sendable (HookEvent) -> Void
   ) {
     guard isLocal(connection.endpoint) else { return connection.cancel() }
     connection.start(queue: queue)
-    // Closed whether or not it ever said anything. Cancelling one that has
-    // already answered and gone costs nothing.
     queue.asyncAfter(deadline: .now() + idle) { connection.cancel() }
     receive(connection, port: port, buffer: Data(), deliver: deliver)
   }
 
-  /// Binding to the loopback is what keeps the rest of the network out. This
-  /// says so a second time, because a listener that ever moved would otherwise
-  /// start taking what it finds.
+  // Security: repeats the loopback bind, in case the bind ever changes.
   nonisolated static func isLocal(_ endpoint: NWEndpoint) -> Bool {
     guard case .hostPort(let host, _) = endpoint else { return false }
     switch host {
@@ -150,7 +123,7 @@ package final class HookListener {
     case .request(let request):
       let status = HookRouter.status(for: request, port: port)
       answer(connection, status)
-      // After the answer, never before it.
+      // Only after the answer, so a hook never waits on ctxscope's work.
       guard status == .ok, let event = HookEvent.decode(request.body) else { return }
       deliver(event)
     }

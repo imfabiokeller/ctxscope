@@ -1,18 +1,6 @@
 package import Foundation
 
-/// One hook event, with the two fields ctxscope needs from it.
-///
-/// The payload shape is the one in the hooks reference: `session_id`,
-/// `transcript_path`, `cwd` and `hook_event_name` on every event, `agent_id`
-/// and `agent_type` inside a subagent, `reason` on `SessionEnd`. Only the
-/// event name and the session id are read: ctxscope finds the transcript
-/// itself, and a field nobody uses is a field that can go wrong. Everything
-/// else is read past, so a transcript's text never enters ctxscope through a
-/// hook.
 package struct HookEvent: Sendable, Equatable {
-  /// The one event ctxscope asks for. Everything else a session posts, from
-  /// an older settings file or from somebody else's wiring, is answered with
-  /// a 200 and dropped.
   package enum Kind: String, Sendable, Equatable, CaseIterable {
     case sessionEnd = "SessionEnd"
   }
@@ -25,10 +13,8 @@ package struct HookEvent: Sendable, Equatable {
     self.sessionID = sessionID
   }
 
-  /// The event in a hook's POST body, or nil when it is not one ctxscope
-  /// listens for. An unknown event is not an error: the listener still answers
-  /// 200, because a hook that is told something went wrong says so in the
-  /// transcript for no reason.
+  // An unknown event is not an error: the listener still answers 200, or the
+  // hook would report a failure in the transcript.
   package static func decode(_ data: Data) -> HookEvent? {
     guard let payload = try? JSONDecoder().decode(Payload.self, from: data),
       let name = payload.hookEventName, let kind = Kind(rawValue: name),
@@ -37,6 +23,7 @@ package struct HookEvent: Sendable, Equatable {
     return HookEvent(kind: kind, sessionID: session)
   }
 
+  // Only these two fields are decoded, so transcript text never enters through a hook.
   private struct Payload: Decodable {
     let hookEventName: String?
     let sessionID: String?
@@ -48,12 +35,8 @@ package struct HookEvent: Sendable, Equatable {
   }
 }
 
-/// What the listener answers, decided before anything is done about it.
-///
-/// Claude Code posts from a process on this machine with no `Origin` and with
-/// the host it was given. A page in a browser cannot set either, so refusing a
-/// request that carries an `Origin`, or that names a host ctxscope never
-/// published, keeps a page somebody opened from posting made-up events at it.
+// Security: a browser page cannot omit `Origin` or choose the host, so refusing
+// either keeps pages from posting made-up events.
 package enum HookRouter {
   package static func status(for request: HookRequest, port: UInt16?) -> HTTPStatus {
     guard request.path == HookWiring.path else { return .notFound }
@@ -63,8 +46,6 @@ package enum HookRouter {
     return .ok
   }
 
-  /// The hook URL names 127.0.0.1 and our port. `localhost` is the same
-  /// machine by another name and is taken too; anything else is not us.
   static func isOurs(host: String?, port: UInt16?) -> Bool {
     guard let host else { return false }
     guard let port else { return true }

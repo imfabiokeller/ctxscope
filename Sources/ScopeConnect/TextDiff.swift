@@ -1,17 +1,7 @@
 package import Foundation
 
-/// The exact lines a write would change, for a person to read before it
-/// happens. Every settings write shows its diff first.
-///
-/// The common prefix and suffix are taken off first and the rest goes through
-/// the standard library's own difference, which is linear in the edit. A table
-/// over every pair of lines is what a settings file of a few thousand lines
-/// used to cost minutes and gigabytes.
 package enum TextDiff {
-  /// How many unchanged lines are shown around a change.
   package static let context = 2
-  /// How many lines are shown at all. A diff nobody can read is not worth the
-  /// memory, and what ctxscope writes is under a hundred.
   package static let maxLines = 400
 
   package struct Line: Sendable, Equatable {
@@ -25,7 +15,6 @@ package enum TextDiff {
     package let text: String
   }
 
-  /// A diff of two files, as lines. Empty when nothing changes.
   package static func lines(from old: Data, to new: Data) -> [Line] {
     let before = SourceText.lines(of: old).map { $0.trimmingCharacters(in: .newlines) }
     let after = SourceText.lines(of: new).map { $0.trimmingCharacters(in: .newlines) }
@@ -33,8 +22,6 @@ package enum TextDiff {
     return capped(trimmed(merge(before, after)))
   }
 
-  /// The same, as text. One block, no header: the panel and the terminal both
-  /// show it as it is.
   package static func text(from old: Data, to new: Data) -> String {
     lines(from: old, to: new).map { $0.mark.rawValue + " " + $0.text }.joined(separator: "\n")
   }
@@ -55,7 +42,6 @@ package enum TextDiff {
       + before[(before.count - tail)...].map { Line(mark: .kept, text: $0) }
   }
 
-  /// The edit between two runs of lines, in the order a reader walks them.
   private static func changes(_ before: [String], _ after: [String]) -> [Line] {
     var removed: Set<Int> = []
     var inserted: [Int: String] = [:]
@@ -87,8 +73,6 @@ package enum TextDiff {
     return result
   }
 
-  /// Keeps the changed lines and a little around them, and says how many lines
-  /// it left out rather than leaving a gap the reader has to guess at.
   private static func trimmed(_ lines: [Line]) -> [Line] {
     var keep = [Bool](repeating: false, count: lines.count)
     for (slot, line) in lines.enumerated() where line.mark != .kept {
@@ -113,7 +97,6 @@ package enum TextDiff {
     return result
   }
 
-  /// A diff nobody could read is cut off, and says how much it cut.
   private static func capped(_ lines: [Line]) -> [Line] {
     guard lines.count > maxLines else { return lines }
     return Array(lines.prefix(maxLines))
