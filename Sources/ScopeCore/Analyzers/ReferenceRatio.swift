@@ -1,47 +1,22 @@
-/// Reference ratio and positional share for the context at one request.
-
 public struct ReferenceSummary: Sendable, Codable, Hashable {
   public let request: Int
   public let totalTokens: Tokens
   public let assessedTokens: Tokens
   public let notAssessableTokens: Tokens
   public let referencedTokens: Tokens
-  /// referenced tokens / assessed tokens.
   public let ratio: Double
-  /// 90 percent interval around `ratio`, Wilson, on the effective sample
-  /// size of the token weighting.
-  ///
-  /// It covers one thing only: how much the ratio could move because a
-  /// handful of large segments carry most of the weight. It says nothing
-  /// about whether the judge is right, which is the larger uncertainty and
-  /// the one only ablation can close.
   public let interval: ClosedRange<Double>
-  /// Kish effective sample size. Segments are weighted by tokens, so a lane
-  /// with one huge segment has far less evidence than its segment count
-  /// suggests, and this is that count.
   public let effectiveSampleSize: Double
-  /// The same ratio over the segments the model did not produce: memory, user
-  /// prompts, tool results. That is the research question, and it is the one
-  /// number the model quoting its own tool calls back at itself cannot
-  /// flatter.
   public let inputAssessedTokens: Tokens
   public let inputReferencedTokens: Tokens
   public let inputRatio: Double
-  /// Reused tokens as a share of everything in the context, which is the one
-  /// number the header and the menu bar both show under the word "reused". The
-  /// ratio above divides by what could be assessed instead, and with a large
-  /// prefix that cannot be assessed the two differ by about a factor of two.
   public var reusedShareOfContext: Double {
     let total = totalTokens.value
     guard total > 0 else { return 0 }
     return Double(referencedTokens.value) / Double(total)
   }
 
-  /// What the interval covers, in words, so no reader has to guess.
   public var intervalCovers: String { "sampling across segments, not judge error" }
-  /// Referenced share for the first, middle, and last third of the context,
-  /// measured in tokens along true prompt order: the fixed prefix, then the
-  /// conversation in the order it happened.
   public let positionalShare: [Double]
 }
 
@@ -49,9 +24,6 @@ public enum ReferenceAnalyzer {
   /// z for a two-sided 90 percent interval.
   private static let z = 1.6449
 
-  /// `order` is the live segments in true prompt order, for a caller that
-  /// already has them. Without it they are worked out here, which costs a
-  /// filter and a sort of the whole lane.
   public static func run(
     _ lane: Lane,
     references: ReferenceReport,
@@ -94,15 +66,13 @@ public enum ReferenceAnalyzer {
     }
 
     let ratio = assessed > 0 ? referenced / Double(assessed) : 0
-    // Kish: the count of equally weighted segments that would carry the same
-    // evidence as these unequally weighted ones.
+    // Kish effective sample size.
     let effective = weightSquareSum > 0 ? (weightSum * weightSum) / weightSquareSum : 0
     return ReferenceSummary(
       request: request,
       totalTokens: Tokens(total, grade),
       assessedTokens: Tokens(assessed, grade),
       notAssessableTokens: Tokens(notAssessable, grade),
-      // The judge is an estimate however well the sizes are known.
       referencedTokens: Tokens(Int(referenced.rounded()), .estimated),
       ratio: ratio,
       interval: wilson(ratio: ratio, sampleSize: effective),
@@ -126,8 +96,6 @@ public enum ReferenceAnalyzer {
     for segment in live {
       let finding = findings[segment.id]
       let isAssessable = finding?.isAssessable ?? segment.isAssessable
-      // A segment can straddle a third. Split its tokens across the thirds
-      // it covers so the shares stay proportional to real prompt position.
       var left = segment.tokens.value
       while left > 0 {
         let third = min(2, position * 3 / total)

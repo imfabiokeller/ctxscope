@@ -1,19 +1,9 @@
-/// Judge input for a synthetic recording.
-///
-/// Two shapes, because two questions are being asked. `input` draws hashes at
-/// the volume real content produces, which is what a bench needs. `corpus`
-/// writes actual filler text, shingles it the way the adapter does and has
-/// later requests quote parts of it, which is what a view of the referenced
-/// share and a block's text need.
 public enum SyntheticJudge {
-  /// Shingles one response is worth, at the rate real output produces them.
   public static let outputShingles = 200
-  /// One shingle per this many tokens, which is what real content yields.
   public static let tokensPerShingle = 12
 
   public static func input(for lane: Lane, seed: UInt64 = 0x5bf0_3635_1f2c_a19b) -> JudgeInput {
     var random = SyntheticRecording.Random(seed: seed)
-    // A vocabulary large enough that hits and misses both happen.
     let pool = (0..<200_000).map { _ in random.next() }
     func draw(_ count: Int) -> [UInt64] {
       (0..<count).map { _ in pool[Int(random.next() % UInt64(pool.count))] }
@@ -33,8 +23,6 @@ public enum SyntheticJudge {
     return JudgeInput(segments: segments, consumers: consumers)
   }
 
-  /// Text per segment, shingled the way the adapter shingles it, with later
-  /// requests quoting parts of it.
   public static func corpus(
     for lane: Lane,
     seed: UInt64 = 0x51ed_2701_7b3a_0c4d
@@ -64,8 +52,6 @@ public enum SyntheticJudge {
           shingles: Shingler.sampled(of: text, limit: 400)
         )
       )
-      // Roughly half of what enters is quoted back within a few requests, at a
-      // share that varies, which is the spread the two encodings have to show.
       guard random.unit() < 0.55 else { continue }
       let words = Shingler.words(text)
       let take = max(Shingler.width, Int(Double(words.count) * (0.1 + random.unit() * 0.5)))
@@ -85,8 +71,7 @@ public enum SyntheticJudge {
     return (JudgeInput(segments: segments, consumers: consumers), texts)
   }
 
-  /// Filler prose from a small technical vocabulary. It stands for content, it
-  /// is not content: no transcript text ever reaches a fixture or a snapshot.
+  /// Stands for content: no transcript text ever reaches a fixture or a snapshot.
   private static func sentences(words count: Int, random: inout SyntheticRecording.Random)
     -> String
   {

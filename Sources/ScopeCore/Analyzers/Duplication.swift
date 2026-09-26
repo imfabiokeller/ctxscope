@@ -1,18 +1,9 @@
-/// Segments with identical content alive at the same time. The hash is
-/// measured, the grouping is exact.
-
 public struct DuplicateGroup: Sendable, Codable, Hashable {
   public let contentHash: UInt64
   public let segments: [SegmentID]
   public let label: String
-  /// The size of each copy. Copies of the same content can differ in size,
-  /// because each was sized against the delta it entered in, so this is a
-  /// list rather than one number.
   public let copyTokens: [Tokens]
-  /// What the copies beyond the first cost, summed over the requests they
-  /// overlapped in.
   public let wastedCarryTokens: Tokens
-  /// First request where more than one copy was alive.
   public let firstOverlap: Int
 }
 
@@ -34,10 +25,6 @@ public enum DuplicationAnalyzer {
     var wastedGrade = Grade.measured
     for (hash, segments) in byHash where segments.count > 1 {
       let sorted = segments.sorted { $0.born < $1.born }
-      // An interval sweep, not a scan of every request against every copy:
-      // the events are the births and deaths, and between two events nothing
-      // changes. The scan version went from 78 ms to 1.2 s for four times the
-      // requests, which is the wrong shape for a 1M token window.
       var events: [(request: Int, delta: Int, tokens: Int)] = []
       events.reserveCapacity(sorted.count * 2)
       for segment in sorted {
@@ -55,7 +42,6 @@ public enum DuplicationAnalyzer {
       var index = 0
       while index < events.count {
         let request = events[index].request
-        // Charge the span that just ended, at the state it was held in.
         if alive > 1, request > previous {
           if firstOverlap == nil { firstOverlap = previous }
           overlapCost += (aliveTokens - smallestAlive) * (request - previous)
@@ -65,8 +51,6 @@ public enum DuplicationAnalyzer {
           aliveTokens += events[index].delta * events[index].tokens
           index += 1
         }
-        // Copies of the same content can differ in size, so the one that is
-        // not waste is the smallest of those alive.
         smallestAlive =
           sorted.filter { $0.isLive(at: request) }.map(\.tokens.value).min() ?? 0
         previous = request

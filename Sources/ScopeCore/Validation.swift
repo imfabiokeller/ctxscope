@@ -1,7 +1,3 @@
-/// The checks behind `ctxscope validate`, and the same ones the test suite
-/// runs. The headline is the first one: segment sizes must sum to the API's
-/// own number on every request, exactly.
-
 public struct RequestMismatch: Sendable, Codable, Hashable {
   public let request: Int
   public let measured: Int
@@ -24,17 +20,10 @@ public struct LaneValidation: Sendable, Codable {
   public let residualMedian: Double
   public let residualP90: Double
   public let residualMax: Double
-  /// Every miss the estimator made, added up without cancelling, over every
-  /// token that ever entered. Misses do not cancel: each one stays with the
-  /// segment it was made on for as long as that segment is carried, so this
-  /// is the honest bound on how wrong the composition is.
   public let compositionError: Double
   public let rates: EstimatorRates
   public let prefixTokens: Int
   public let stats: CaptureStats
-  /// Everything that happened to the lane's context, each with the grade of
-  /// the claim: what the harness recorded, and what the reconstruction had to
-  /// decide for itself.
   public let events: [LaneEvent]
   public let checks: [ValidationCheck]
 
@@ -86,11 +75,7 @@ public enum Validator {
           : "\(negative.count) segments below zero tokens"
       )
     )
-    // A block that ends up at the floor did not get a size of its own: the
-    // measured delta ran out before it was reached, so it was pinned at one
-    // token or at zero. Counting only the zeros hides the problem, because the
-    // floor is one. A lane where this happens often is a lane where something
-    // upstream is claiming tokens that are not its own.
+    // `<= floor`, not `== 0`: the floor is one token.
     let floored = lane.segments.filter { $0.characters > 0 && $0.tokens.value <= Segment.floor }
     let flooredShare =
       lane.segments.isEmpty ? 0 : Double(floored.count) / Double(lane.segments.count)
@@ -109,9 +94,6 @@ public enum Validator {
             ? ", \(lane.stats.rejectedMeasurements) finished totals refused as implausible" : "")
       )
     )
-    // Parallel calls put every sibling result off the parent chain. If those
-    // results are not put back, their tokens are silently spread over their
-    // neighbours and the judge never sees them.
     checks.append(
       ValidationCheck(
         name: "tool calls brought their results",
@@ -121,9 +103,7 @@ public enum Validator {
           : "\(lane.stats.toolCallsWithResult) of \(lane.stats.toolCalls) calls have their result"
       )
     )
-    // Content that left with nothing in the transcript saying so. Exactness
-    // is unaffected, but which segments carried the loss is a hypothesis, so
-    // the reader is told how much of the lane rests on one.
+    // Informational: exactness is unaffected, only which segments carried the loss is a guess.
     let retired = lane.stats.inferredRetirementTokens
     checks.append(
       ValidationCheck(
@@ -137,9 +117,6 @@ public enum Validator {
             + "\(TokenFormat.tokens(lane.stats.unattributedTokens)) tokens unattributed"
       )
     )
-    // What the input itself was like. A chain that restarts takes every
-    // segment with it, so a lane with many of them is one whose history is
-    // missing rather than one that was analysed badly.
     checks.append(
       ValidationCheck(
         name: "the transcript read cleanly",
@@ -168,16 +145,10 @@ public enum Validator {
         detail: "prefix \(TokenFormat.tokens(prefix)) tokens"
       )
     )
-    // This one is about the input, not about ctxscope: when the API's own
-    // usage fields disagree with each other, every number derived from them
-    // is uncertain and the reader should know.
     let badUsage = lane.snapshots.filter {
       $0.usage.cacheCreationTokens != $0.usage.ephemeral1hTokens + $0.usage.ephemeral5mTokens
     }
-    // A request that took two attempts reports an aggregate assembled from
-    // both, and its fields can then disagree with each other. That is an
-    // explanation, not a failure, so the check only fails when there is no
-    // explanation.
+    // Two attempts aggregate usage from both, so a mismatch there is explained.
     let unexplained = badUsage.filter { $0.usage.iterations < 2 }
     checks.append(
       ValidationCheck(
@@ -223,14 +194,7 @@ public enum Validator {
     return sorted[index]
   }
 
-  /// Band estimates against the harness's own
-  /// `/context` report on the same session, with the error per category.
-  ///
-  /// It is a comparison, not an invariant. The harness counted the same prompt
-  /// with its own tokenizer, so a few percent either way says the estimator is
-  /// working; the check only fails when the two disagree about the whole
-  /// request by more than a quarter, which would mean something structural is
-  /// wrong rather than an estimate being off.
+  /// The harness uses its own tokenizer; only a gap over a quarter means something structural.
   static func harnessCheck(
     _ lane: Lane, report: ContextReport, tally: Tally
   ) -> ValidationCheck {
@@ -262,7 +226,6 @@ public enum Validator {
     )
   }
 
-  /// How far one number is from another, as a share of the other.
   private static func share(_ ours: Int, of theirs: Int) -> Double {
     guard theirs > 0 else { return 0 }
     return Double(ours - theirs) / Double(theirs)

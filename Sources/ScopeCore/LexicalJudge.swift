@@ -1,42 +1,15 @@
-/// Span-level overlap between a segment and everything the model wrote after
-/// it entered the context.
-///
-/// Incremental and indexed, never pairwise. A segment is indexed by its
-/// shingles when it arrives; a consumer looks its own shingles up in that
-/// index and marks the segments it hits. The work per request is proportional
-/// to the output of that request, which is what a 1M token window needs.
 public struct LexicalJudge: UseJudge {
-  /// A shingle that occurs in more than this share of the input-side segments
-  /// is boilerplate: a path prefix, a command head, a line of framing every
-  /// tool result carries. It matches everything, so it says nothing about
-  /// reuse.
-  ///
-  /// The frequency is counted over input-side segments only. Counting the
-  /// model's own output in it made every genuine reuse raise the frequency of
-  /// the shingle it matched, so in a lane of a hundred segments content quoted
-  /// once was already at the cutoff and was dropped as boilerplate.
   public static let boilerplateShare = 0.02
-  /// The smallest a cutoff can be. A shingle in five separate inputs is
-  /// common; a shingle in two is a quotation.
   public static let boilerplateFloor = 5
 
   public let method: JudgeMethod
 
   private var segments: [JudgedSegment] = []
-  /// Shingle to the segments that contain it.
   private var index: [UInt64: [Int]] = [:]
-  /// How many input-side segments carry a shingle, which is the frequency the
-  /// boilerplate rule reads.
   private var inputFrequency: [UInt64: Int] = [:]
   private var inputSegments = 0
-  /// Per segment, each reused shingle and the first request that reused it.
-  /// The request matters: without it the only share a view could show at a
-  /// request was the one at the end of the lane, which is the future.
   private var matched: [[UInt64: Int]] = []
   private var references: [[Int]] = []
-  /// The findings as they stand, and the slots that have moved since they were
-  /// last computed. Recomputing all of them cost 61 ms on a lane of 7,479
-  /// segments, every time anything asked for a report.
   private var findings: [ReferenceFinding] = []
   private var dirty: Set<Int> = []
   private var computedCutoff = -1
@@ -73,10 +46,7 @@ public struct LexicalJudge: UseJudge {
       guard segment.isInput else { continue }
       let frequency = (inputFrequency[shingle] ?? 0) + 1
       inputFrequency[shingle] = frequency
-      // A shingle that has just become boilerplate stops counting towards
-      // every segment that carries it, so all of them have to be worked out
-      // again. Nothing else can change a finding while the cutoff stands
-      // still, and a cutoff that moves rebuilds everything anyway.
+      // A shingle that just became boilerplate changes every segment carrying it.
       if frequency == cutoff + 1 { dirty.formUnion(index[shingle] ?? []) }
     }
   }
@@ -85,13 +55,8 @@ public struct LexicalJudge: UseJudge {
     for shingle in Set(consumer.shingles) {
       guard let slots = index[shingle] else { continue }
       for slot in slots {
-        // A segment can be referenced by the request it entered at: the model
-        // writes a tool call in the same response that reads the previous
-        // result, and its own output is born one request later, so no segment
-        // can match itself.
+        // `>=` on purpose: own output is born a request later, so nothing matches itself.
         guard consumer.request >= segments[slot].born else { continue }
-        // The first request that reused a shingle is the one that counts: a
-        // second look at the same words is not more reuse.
         if matched[slot][shingle] == nil { matched[slot][shingle] = consumer.request }
         dirty.insert(slot)
         if references[slot].last != consumer.request {
@@ -101,13 +66,6 @@ public struct LexicalJudge: UseJudge {
     }
   }
 
-  /// The findings as they stand.
-  ///
-  /// Only the segments that moved since the last report are recomputed. The
-  /// exception is the boilerplate cutoff: it is a step function of how many
-  /// input-side segments have been seen, and when it moves every finding moves
-  /// with it, so that case rebuilds all of them. Either way the answer is the
-  /// one a judge fed the same input from scratch would give.
   public mutating func report() -> ReferenceReport {
     let cutoff = boilerplateCutoff()
     if cutoff != computedCutoff {
@@ -127,8 +85,6 @@ public struct LexicalJudge: UseJudge {
     }
     var total = 0
     var hits = 0
-    // How many k-grams had been reused by the end of each request that reused
-    // any. Counted here, because which shingles count depends on the cutoff.
     var firstMatch: [Int: Int] = [:]
     for shingle in segment.shingles {
       guard (inputFrequency[shingle] ?? 0) <= cutoff else { continue }
@@ -137,8 +93,7 @@ public struct LexicalJudge: UseJudge {
       hits += 1
       firstMatch[request, default: 0] += 1
     }
-    // A segment made only of boilerplate has nothing that could tell reuse
-    // apart from repetition, so it is not assessable rather than zero.
+    // Only boilerplate: nothing tells reuse from repetition, so not assessable rather than zero.
     guard total > 0 else { return Self.notAssessable(segment.id) }
     var requests: [Int] = []
     var counts: [Int] = []

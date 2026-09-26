@@ -1,45 +1,28 @@
-/// Carry cost: tokens times requests carried, per segment: the area a block
-/// covers in the timeline. Unreferenced carry cost ranks what was carried unused.
-
 public struct SegmentCost: Sendable, Codable, Hashable {
   public let segment: SegmentID
   public let band: Band
   public let label: String
   public let tokens: Tokens
   public let requestsCarried: Int
-  /// tokens times requests carried. No better graded than the size it rests
-  /// on.
   public let carryTokens: Tokens
-  /// The share of `carryTokens` no later output referenced. `nil` when the
-  /// segment is not assessable. Always estimated: the judge is.
   public let unreferencedCarryTokens: Tokens?
   public let referencedShare: Double?
   public let isAssessable: Bool
-  /// Requests the segment was carried before its first reference, or its
-  /// whole life when nothing referenced it.
   public let unreferencedAge: Int
 }
 
 public struct CarryCostAnalysis: Sendable, Codable {
-  /// Every segment, ranked by unreferenced carry cost, highest first.
-  /// Not assessable segments rank last.
   public let ranked: [SegmentCost]
   public let totalCarryTokens: Tokens
   public let maxUnreferencedAge: Int
   public let maxUnreferencedAgeSegment: SegmentID?
 
-  /// The six largest, or fewer when the lane is short.
   public func top(_ count: Int = 6) -> [SegmentCost] {
     Array(ranked.prefix(count))
   }
 }
 
 public enum CarryCostAnalyzer {
-  /// The `count` costliest segments alive at a request, without sorting the
-  /// whole lane to find six of them.
-  ///
-  /// Same numbers as `run`, same conventions, selected rather than sorted: on
-  /// a 7,485 segment lane the sort was most of what a frame cost.
   public static func top(
     _ lane: Lane,
     references: ReferenceReport?,
@@ -80,41 +63,22 @@ public enum CarryCostAnalyzer {
     return best
   }
 
-  /// Requests a segment has been carried, counted up to and not including
-  /// `request`.
-  ///
-  /// One convention, stated once: a segment born at 4 and looked at from 4 has
-  /// been carried zero requests, because it has not been re-sent yet. At 5 it
-  /// has been carried once. A segment that left at 9 stops counting at 9.
+  /// Excludes `request`: a block born at 4 has been carried 0 times at 4, once at 5.
   public static func requestsCarried(of segment: Segment, upTo request: Int) -> Int {
     let died = segment.died ?? Int.max
     return max(0, min(request, died) - segment.born)
   }
 
-  /// Requests a segment has been in, counted up to and including `request`.
-  ///
-  /// This is the "carried" a person reads beside a block: the system prompt of
-  /// a lane of 87 requests, looked at from the last one, has been in 87. It is
-  /// one more than `requestsCarried` for a live segment, because that one
-  /// counts the times a segment was sent again, and the first send is not
-  /// one of them.
+  /// One more than `requestsCarried` for a live segment: the first send counts here.
   public static func requestsIn(of segment: Segment, through request: Int) -> Int {
     let died = segment.died ?? Int.max
     return max(0, min(request + 1, died) - segment.born)
   }
 
-  /// Tokens times requests carried, at the same convention.
   public static func carry(of segment: Segment, upTo request: Int) -> Tokens {
     Tokens(segment.tokens.value * requestsCarried(of: segment, upTo: request), segment.tokens.grade)
   }
 
-  /// The ranked list, as of a request.
-  ///
-  /// `upTo` is the playhead: the cost so far, not the cost of a life that has
-  /// not happened yet. `liveOnly` drops what has already left the context,
-  /// because a cost nobody can still act on is not what the table is for.
-  /// Everything that reads this list, the CLI, the blocks table and the snapshots,
-  /// comes through here, so none of them can disagree.
   public static func run(
     _ lane: Lane,
     references: ReferenceReport?,

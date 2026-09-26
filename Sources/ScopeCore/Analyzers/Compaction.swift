@@ -1,17 +1,10 @@
-/// What a compaction did, as an analysis rather than something the adapter
-/// worked out on the way past. The harness records the totals, so most of this
-/// is measured; which segments survived is a fact about the reconstruction.
 public struct CompactionSummary: Sendable, Codable, Hashable {
   public let event: CompactionEvent
   public let survivingSegments: Int
   public let survivingTokens: Tokens
   public let droppedSegments: Int
   public let droppedTokens: Tokens
-  /// Tokens that entered at the compaction, which is the summary it wrote.
   public let summaryTokens: Tokens
-  /// What the harness said it dropped, against what the reconstruction says,
-  /// once the summary that arrived in its place is accounted for. A large
-  /// disagreement means the reconstruction lost the thread.
   public let disagreement: Int
 }
 
@@ -47,6 +40,7 @@ public enum CompactionAnalyzer {
           droppedGrade = max(droppedGrade, segment.tokens.grade)
         }
       }
+      let droppedNetOfSummary = event.preTokens - event.postTokens + entered
       summaries.append(
         CompactionSummary(
           event: event,
@@ -55,9 +49,7 @@ public enum CompactionAnalyzer {
           droppedSegments: casualties,
           droppedTokens: Tokens(dropped, droppedGrade),
           summaryTokens: Tokens(entered, enteredGrade),
-          // The context fell by what left minus what the summary put back, so
-          // that is what the harness number has to be compared against.
-          disagreement: abs((event.preTokens - event.postTokens + entered) - dropped)
+          disagreement: abs(droppedNetOfSummary - dropped)
         )
       )
     }

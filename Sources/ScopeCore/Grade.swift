@@ -1,15 +1,8 @@
-/// Provenance of a number: measured, derived or estimated, as
-/// `docs/HOW_IT_MEASURES.md` describes. The UI never shows a token count
-/// without one, so the grade travels with the value.
 public enum Grade: String, Sendable, Codable, CaseIterable, Comparable {
-  /// Reported by the API.
   case measured = "M"
-  /// Arithmetic on measured values.
   case derived = "D"
-  /// Produced by the local estimator.
   case estimated = "E"
 
-  /// Ordered by strength: measured is the strongest.
   private var strength: Int {
     switch self {
     case .measured: 0
@@ -23,7 +16,6 @@ public enum Grade: String, Sendable, Codable, CaseIterable, Comparable {
   }
 }
 
-/// A token count with its provenance.
 public struct Tokens: Sendable, Hashable, Codable {
   public var value: Int
   public var grade: Grade
@@ -44,7 +36,6 @@ public struct Tokens: Sendable, Hashable, Codable {
   }
 }
 
-/// A share with its provenance, for the same reason a token count has one.
 public struct GradedShare: Sendable, Hashable, Codable {
   public var value: Double
   public var grade: Grade

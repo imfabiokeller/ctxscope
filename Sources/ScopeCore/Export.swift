@@ -1,7 +1,5 @@
 public import Foundation
 
-/// The two shapes a recording leaves in, JSON and CSV. One home, so the CLI and
-/// the window cannot disagree about what an export is.
 public enum ExportFormat: String, Sendable, CaseIterable, Identifiable {
   case json
   case csv
@@ -10,14 +8,7 @@ public enum ExportFormat: String, Sendable, CaseIterable, Identifiable {
   public var fileExtension: String { rawValue }
 }
 
-/// Everything a JSON export carries.
-///
-/// Requests are numbered from one here, the way the window and the command
-/// line show them, so a row of an export and a request a person read off the
-/// screen are the same request. Inside a recording they are indices from zero,
-/// because that is what they index.
 public struct ExportPayload: Encodable, Sendable {
-  /// Says out loud what every request number in this file counts from.
   public let requestNumbersFrom = 1
   public let sessionID: String
   public let project: String
@@ -57,7 +48,6 @@ public enum Export {
     Data(text(payload, format: format).utf8)
   }
 
-  /// The same payload with every request numbered the way a person reads it.
   static func numbered(_ payload: ExportPayload) -> ExportPayload {
     let lane = payload.lane
     return ExportPayload(
@@ -127,9 +117,6 @@ public enum Export {
     return copy
   }
 
-  /// One row per segment: the shape every later analysis starts from. The
-  /// referenced share travels with it, because a segment without it cannot be
-  /// read back into anything.
   public static func csv(lane: Lane, references: ReferenceReport) -> String {
     let findings = references.bySegment()
     var rows = [

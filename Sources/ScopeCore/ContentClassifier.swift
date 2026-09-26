@@ -1,9 +1,4 @@
-/// Picks the content class the estimator fits a rate for. One source of
-/// truth, used by every adapter, so two harnesses classify the same text the
-/// same way.
 public enum ContentClassifier {
-  /// Only the head of a long block is inspected: the class of 400 KB of
-  /// shell output is decided in its first lines like everything else.
   private static let window = 4000
 
   public static func classify(_ text: String) -> ContentClass {
@@ -14,9 +9,6 @@ public enum ContentClassifier {
     var lines = 1
     var previousWasNewline = false
     var length = 0
-    // Only the head is inspected, and it is taken by walking scalars rather
-    // than by copying a prefix out: this runs on every block of every
-    // request, including 400 KB ones.
     for scalar in text.unicodeScalars {
       length += 1
       if length > window { break }

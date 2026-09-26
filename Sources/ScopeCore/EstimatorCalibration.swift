@@ -1,18 +1,7 @@
-/// Continuous calibration of the token estimator against derived values of
-/// the same lane: an estimate is corrected by what the lane measured, never
-/// the other way round.
-///
-/// Incremental by construction: every sample folds into a small normal
-/// equation system, so a growing session costs only the new deltas and a
-/// 1M-token window costs the same as a short one.
 public struct EstimatorCalibration: Sendable, Codable {
-  /// One column per content class, plus the per-request framing constant.
-  /// The per-block cost is fixed and subtracted before the fit, because the
-  /// two constants are collinear and letting the fit choose between them put
-  /// the framing on tiny blocks.
+  /// Per-block cost is fixed, not a column: it is collinear with the per-request term.
   private static let dimension = ContentClass.allCases.count + 1
-  /// Pull toward the prior. Small enough that a few hundred samples win,
-  /// large enough that five samples cannot invent a rate.
+  /// Small enough that a few hundred samples win, large enough that five cannot invent a rate.
   private static let ridge = 8.0
 
   private var normal: [Double]
@@ -26,16 +15,13 @@ public struct EstimatorCalibration: Sendable, Codable {
 
   public var sampleCount: Int { count }
 
-  /// Pools two fits. The normal equations add, which is what makes a prior
-  /// fitted over many sessions reproducible from the sessions themselves.
   public mutating func merge(_ other: EstimatorCalibration) {
     for index in normal.indices { normal[index] += other.normal[index] }
     for index in right.indices { right[index] += other.right[index] }
     count += other.count
   }
 
-  /// Folds one derived delta into the fit. Weighted for relative error, so a
-  /// 400k-token request does not drown out a 400-token one.
+  /// Weighted for relative error, so a large request does not drown out a small one.
   public mutating func observe(_ sample: EstimatorSample) {
     guard sample.tokens > 0 else { return }
     let row = Self.row(of: sample)
@@ -51,8 +37,6 @@ public struct EstimatorCalibration: Sendable, Codable {
     count += 1
   }
 
-  /// Rates that best explain the samples seen so far, pulled toward `prior`
-  /// and clamped to a factor of three around it.
   public func rates(prior: EstimatorRates = .prior) -> EstimatorRates {
     guard count > 0 else { return prior }
     let priorVector = Self.vector(of: prior)
@@ -83,7 +67,6 @@ public struct EstimatorCalibration: Sendable, Codable {
     for (index, contentClass) in ContentClass.allCases.enumerated() {
       row[index] = Double(sample.characters[contentClass] ?? 0)
     }
-    // The framing constant: one per request, however many blocks arrived.
     row[dimension - 1] = 1
     return row
   }
@@ -97,7 +80,6 @@ public struct EstimatorCalibration: Sendable, Codable {
     return vector
   }
 
-  /// Gaussian elimination with partial pivoting. The system is 5 by 5.
   private static func solve(_ matrix: [Double], _ vector: [Double]) -> [Double]? {
     let n = dimension
     var a = matrix

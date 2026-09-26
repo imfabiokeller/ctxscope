@@ -1,17 +1,10 @@
 import Foundation
 
-/// A seeded synthetic recording, shaped like a real session: a prefix, then
-/// prompts, responses and tool results, with a compaction and a cache bust.
-/// It exists so scale can be tested without a real 1M-token session: the
-/// analyzers must stay incremental, and this is what proves it.
 public enum SyntheticRecording {
   public struct Options: Sendable {
     public var requests: Int
     public var window: Int
     public var compactAt: Int?
-    /// A request where the prefix changed, so the whole cache is written
-    /// again: a bust. Every synthetic session has one, because real sessions
-    /// have them.
     public var bustAt: Int?
     public var subagentsAt: [Int]
     public var peakTokens: Int
@@ -35,20 +28,15 @@ public enum SyntheticRecording {
       self.seed = seed
     }
 
-    /// A session with one request: the prefix and nothing else, which is what
-    /// a window opened on a session that has just started shows.
+    /// `requests` counts after request 0, so 0 is a session with one request.
     public static let oneRequest = Options(
       requests: 0, window: 200_000, compactAt: nil, bustAt: nil, subagentsAt: [],
       peakTokens: 52_000, seed: 3)
 
-    /// The same with a second request, which is the first length that has a
-    /// boundary between columns to draw.
     public static let twoRequests = Options(
       requests: 1, window: 200_000, compactAt: nil, bustAt: nil, subagentsAt: [],
       peakTokens: 64_000, seed: 3)
 
-    /// A 1M-token window without compaction: nothing ever leaves, so carry
-    /// cost grows quadratically and every analyzer has to stay linear.
     public static let millionTokenWindow = Options(
       requests: 360,
       window: 1_000_000,
@@ -65,8 +53,7 @@ public enum SyntheticRecording {
     var segments: [Segment] = []
     var next = 0
 
-    // Reading the same file twice puts the same content in the context
-    // twice. The duplication analyzer needs that to have anything to find.
+    // Reads of one file share a hash, so the duplication analyzer has something to find.
     var contentHashes: [String: UInt64] = [:]
 
     func add(
@@ -90,9 +77,6 @@ public enum SyntheticRecording {
           born: born,
           died: died,
           contentHash: hash,
-          // What the model produced points at the request that produced it.
-          // A tool result is not that: the model asked for it, the harness put
-          // it in.
           originRequest: [.asst, .think, .call].contains(band) ? born : nil
         )
       )
@@ -155,8 +139,6 @@ public enum SyntheticRecording {
     )
   }
 
-  /// Stretches everything outside the prefix so the fullest request lands on
-  /// the requested peak. Without it a 1M window would never fill.
   private static func scaleToPeak(_ segments: inout [Segment], options: Options) {
     let at = (options.compactAt.map { min($0 - 1, options.requests) } ?? options.requests)
     guard at > 0 else { return }
@@ -179,8 +161,6 @@ public enum SyntheticRecording {
     }
   }
 
-  /// Builds the snapshots from the segments, so the request totals are exact
-  /// by construction, the same invariant the real adapter has to hold.
   private static func assemble(segments: [Segment], options: Options) -> Lane {
     let count = options.requests + 1
     var totals = [Int](repeating: 0, count: count)
@@ -195,8 +175,6 @@ public enum SyntheticRecording {
     var snapshots: [Snapshot] = []
     for request in 0..<count {
       let total = totals[request]
-      // What enters is written. A compaction rewrites everything after the
-      // prefix, because the conversation behind it changed.
       var written = births[request]
       if request == 0 {
         written = total
@@ -205,7 +183,6 @@ public enum SyntheticRecording {
           $0.isLive(at: request) && BandRegistry.family(of: $0.band) != .prefix
         }.reduce(0) { $0 + $1.tokens.value }
       } else if request == options.bustAt {
-        // The prefix changed, so nothing matches and everything is written.
         written = total
       }
       written = min(written, total)
@@ -249,7 +226,6 @@ public enum SyntheticRecording {
       segments: segments,
       snapshots: snapshots,
       compactions: compactions,
-      // Every user block of the synthetic lane is a prompt somebody typed.
       prompts: segments.filter { $0.band == .user }.map(\.id)
     )
   }
@@ -274,8 +250,7 @@ public enum SyntheticRecording {
       Double(next() >> 11) / Double(1 << 53)
     }
 
-    /// Box-Muller, then exponentiated: segment sizes spread the way real
-    /// ones do, a few large among many small.
+    /// Box-Muller, then exponentiated.
     public mutating func logNormal(_ median: Double, _ sigma: Double) -> Int {
       let u1 = max(1e-9, unit())
       let u2 = unit()

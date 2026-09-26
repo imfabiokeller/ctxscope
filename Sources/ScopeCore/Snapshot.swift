@@ -1,6 +1,3 @@
-/// One request and everything measured about it.
-
-/// The `usage` block of one API call, as the harness recorded it.
 public struct RequestUsage: Sendable, Codable, Hashable {
   public var inputTokens: Int
   public var cacheReadTokens: Int
@@ -9,11 +6,9 @@ public struct RequestUsage: Sendable, Codable, Hashable {
   public var thinkingTokens: Int
   public var ephemeral1hTokens: Int
   public var ephemeral5mTokens: Int
-  /// How many attempts the API made for this call. Two means a fallback: the
-  /// aggregate usage is then assembled from both attempts, which is why its
-  /// fields can disagree with each other.
+  /// Two means a fallback: usage is aggregated from both attempts, so its
+  /// fields can disagree.
   public var iterations: Int
-  /// The models those attempts used, when there was more than one.
   public var iterationModels: [String]
 
   public init(
@@ -38,51 +33,35 @@ public struct RequestUsage: Sendable, Codable, Hashable {
     self.iterationModels = iterationModels
   }
 
-  /// Everything the model read for this call. The M value every segment sum
-  /// is normalized to.
   public var promptTotal: Int {
     inputTokens + cacheReadTokens + cacheCreationTokens
   }
 
-  /// Share of the prompt that came out of the cache.
   public var cacheHit: Double {
     let denominator = cacheReadTokens + cacheCreationTokens + inputTokens
     guard denominator > 0 else { return 0 }
     return Double(cacheReadTokens) / Double(denominator)
   }
 
-  /// Output tokens that were not thinking.
   public var visibleOutputTokens: Int {
     max(0, outputTokens - thinkingTokens)
   }
 
-  /// Everything that was in the cache after this call.
   public var cachedAfter: Int {
     cacheReadTokens + cacheCreationTokens
   }
 }
 
-/// All segments of one request with their measurements.
 public struct Snapshot: Sendable, Codable, Hashable {
-  /// Position in the lane, 0-based. The unit of time.
   public let index: Int
-  /// The harness `requestId`, when it had one.
   public let requestID: String?
-  /// Seconds since 1970, kept as a plain number so ScopeCore stays free of
-  /// date formatting decisions.
+  /// Seconds since 1970.
   public let timestamp: Double
   public let model: String
   public let usage: RequestUsage
-  /// The request this one continued from. Normally the one before it, but a
-  /// rewind or a compaction makes it something else, and the cache has to be
-  /// compared against the right one.
   public let parentRequest: Int?
-  /// How far the estimator was off for this request, before normalization,
-  /// in tokens. Signed: positive means it estimated too much. It is what the
-  /// estimator's calibration learns from.
+  /// Estimator error before normalization. Positive means it estimated too much.
   public let residualTokens: Int
-  /// Tokens that entered the context at this request. The denominator the
-  /// residual is read against.
   public let appendedTokens: Int
 
   public init(
@@ -105,8 +84,6 @@ public struct Snapshot: Sendable, Codable, Hashable {
     self.appendedTokens = appendedTokens
   }
 
-  /// Residual as a share of what entered at this request. This is the
-  /// estimator's own error against a derived value.
   public var estimatorResidual: Double {
     appendedTokens > 0 ? Double(abs(residualTokens)) / Double(appendedTokens) : 0
   }
@@ -114,9 +91,7 @@ public struct Snapshot: Sendable, Codable, Hashable {
   public var measuredTotal: Tokens { Tokens(usage.promptTotal, .measured) }
 }
 
-/// A compaction, as the harness reported it.
 public struct CompactionEvent: Sendable, Codable, Hashable {
-  /// The request index the compaction takes effect before.
   public let atRequest: Int
   public let trigger: String
   public let preTokens: Int

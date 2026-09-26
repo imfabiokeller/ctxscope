@@ -1,9 +1,6 @@
-/// Turns text into a set of hashed word k-grams. One source of truth: the
-/// adapter shingles content it sees, the judge only ever handles the hashes,
-/// so no transcript text reaches a recording, a log, or a report.
+/// The judge only ever handles these hashes, so no transcript text reaches a recording.
 public enum Shingler {
-  /// Five words is long enough that ordinary phrases do not collide and
-  /// short enough that a reused sentence fragment still matches.
+  /// Long enough that ordinary phrases do not collide, short enough that reused fragments match.
   public static let width = 5
 
   /// FNV-1a, 64 bit.
@@ -20,19 +17,11 @@ public enum Shingler {
     hash(text.utf8)
   }
 
-  /// The one shingle a tool definition is judged by.
-  ///
-  /// A tool schema is referenced when the tool is called.
-  /// Nothing in a response has to quote a schema to have followed it, so the
-  /// call is the evidence, and it is carried as a shingle so the ordinary
-  /// index, cutoff and share apply to it unchanged. The separator is a byte no
-  /// tool name holds, so a name can never collide with real words.
+  /// The separator is a byte no tool name holds, so a name cannot collide with real words.
   public static func toolCall(_ name: String) -> UInt64 {
     hash("tool-call\u{1}" + name)
   }
 
-  /// Lowercased runs of letters and digits. Punctuation and whitespace are
-  /// separators, so JSON and prose shingle the same way.
   public static func words(_ text: String) -> [String] {
     var words: [String] = []
     var current = ""
@@ -49,8 +38,6 @@ public enum Shingler {
     return words
   }
 
-  /// Hashed k-grams of `text`, in order, duplicates kept so coverage can be
-  /// measured as a share.
   public static func shingles(of text: String) -> [UInt64] {
     let words = words(text)
     guard words.count >= width else {
@@ -59,13 +46,6 @@ public enum Shingler {
     return shingles(words)
   }
 
-  /// At most `limit` shingles, spread evenly over the text. A 400 KB tool
-  /// result does not need every k-gram for its referenced share to be within
-  /// a percent, and the cap is what keeps a 1M-token window in memory.
-  ///
-  /// The offsets are chosen first and only those are hashed. Hashing every
-  /// k-gram and then throwing away all but 400 of them was a third of the
-  /// time a large session took.
   public static func sampled(of text: String, limit: Int) -> [UInt64] {
     let words = words(text)
     guard words.count >= width else {
@@ -82,7 +62,6 @@ public enum Shingler {
     return result
   }
 
-  /// Hashes one k-gram in place, without building the joined string.
   private static func hash(_ words: [String], at start: Int) -> UInt64 {
     var value: UInt64 = 0xcbf2_9ce4_8422_2325
     for offset in 0..<width {

@@ -1,17 +1,4 @@
-/// Estimates are normalized so segment sums equal the enclosing measured or
-/// derived total exactly: an estimate may be wrong about its share, never
-/// about the total.
-///
-/// The allocation happens once per segment, when it enters the context, so a
-/// segment has one size for its whole life and every request total is exact
-/// by construction.
 public enum Normalizer {
-  /// Splits `total` across `weights` with the largest-remainder method, so
-  /// the parts are integers that sum to exactly `total`.
-  ///
-  /// Every part gets at least `floor`, which keeps a real block from being
-  /// rounded out of existence. If the floors alone exceed the total, the
-  /// parts are as close to equal as the total allows.
   public static func allocate(total: Int, weights: [Double], floor: Int = 1) -> [Int] {
     guard !weights.isEmpty else { return [] }
     guard total > 0 else { return [Int](repeating: 0, count: weights.count) }

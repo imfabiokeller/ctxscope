@@ -1,29 +1,15 @@
-/// The facts a cache break is explained with: which block of the part sent
-/// with every request changed, and which part of the context was written
-/// again. Facts only; the sentences are the window's.
-
-/// What entered or left the prefix at one request.
 public struct PrefixChange: Sendable, Codable, Hashable {
-  /// The kind of the first changed block in reading order, which is the one
-  /// that broke the cache: everything after it could no longer be read.
   public let kind: Kind
   public let first: SegmentID
   public let firstLabel: String
-  /// Blocks of that kind that entered at the request, in reading order.
   public let added: [SegmentID]
   public let addedTokens: Tokens
-  /// Blocks of that kind that left at the request.
   public let removed: [SegmentID]
   public let removedTokens: Tokens
-  /// The MCP servers the changed tool definitions belong to, in the order
-  /// they appear. Empty for any other kind, and for tool blocks nothing named.
   public let servers: [String]
 }
 
 extension CacheAnalyzer {
-  /// Prefix blocks by the request they entered or left at, later than the
-  /// first request. One pass over the lane, so a break is looked up rather
-  /// than searched for.
   static func prefixMoves(_ lane: Lane) -> [Int: [Segment]] {
     var moves: [Int: [Segment]] = [:]
     for segment in lane.segments where segment.family == .prefix {
@@ -33,7 +19,6 @@ extension CacheAnalyzer {
     return moves
   }
 
-  /// The change a set of prefix blocks that moved at one request amounts to.
   static func prefixChange(_ moved: [Segment], at request: Int) -> PrefixChange? {
     guard let first = moved.min(by: Lane.readsBefore),
       let kind = BandRegistry.kind(of: first.band)
@@ -61,13 +46,7 @@ extension CacheAnalyzer {
     )
   }
 
-  /// The kind of the last block that was read from the cache at a request, in
-  /// reading order. Nil when nothing was read.
-  ///
-  /// A block counts as read when it starts before the boundary, the rule
-  /// `SegmentCacheAnalyzer` writes blocks again by, so a block the estimator
-  /// sized a little large is not reported as written again here and as read
-  /// in the cost.
+  /// Counts a block as read when it starts before the boundary, as `SegmentCacheAnalyzer` does.
   static func readThrough(_ lane: Lane, at request: Int, read: Int) -> Kind? {
     var offset = 0
     var last: Kind?
