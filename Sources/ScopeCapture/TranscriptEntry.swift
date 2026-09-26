@@ -1,12 +1,8 @@
 internal import Foundation
 internal import ScopeCore
 
-/// One line of a transcript, read through the fields ctxscope needs. Anything
-/// else in the line is left alone.
 struct TranscriptEntry: Sendable {
   let raw: JSONValue
-  /// Where the line sits in its file, when it came from one. This is what lets
-  /// the payload be dropped and read back on demand.
   let range: EntryRange?
 
   init(_ raw: JSONValue, range: EntryRange? = nil) {
@@ -23,21 +19,15 @@ struct TranscriptEntry: Sendable {
   var parentUUID: String? { raw["parentUuid"]?.string }
   var sessionID: String? { raw["sessionId"]?.string }
 
-  /// Seconds since 1970. Transcripts write ISO 8601 with milliseconds.
   var timestamp: Double? {
     guard let text = raw["timestamp"]?.string else { return nil }
     return TranscriptEntry.parseTimestamp(text)
   }
 
-  /// The API call this entry belongs to. Several assistant entries share one,
-  /// and their usage must only be counted once.
   var requestID: String? { raw["requestId"]?.string }
 
   var model: String? { raw["message"]?["model"]?.string }
 
-  /// Why the model stopped. Present exactly when the response finished, which
-  /// is the only state in which its `output_tokens` is a total rather than a
-  /// count taken mid-stream.
   var stopReason: String? { raw["message"]?["stop_reason"]?.string }
 
   var usage: RequestUsage? {
@@ -55,8 +45,6 @@ struct TranscriptEntry: Sendable {
     )
   }
 
-  /// `message.content`, normalized to a list of blocks. A bare string is one
-  /// text block.
   var blocks: [JSONValue] {
     guard let content = raw["message"]?["content"] else { return [] }
     if let list = content.array { return list }
@@ -69,16 +57,13 @@ struct TranscriptEntry: Sendable {
   var attachmentType: String? { raw["attachment"]?["type"]?.string }
   var attachment: JSONValue? { raw["attachment"] }
 
-  /// Blocks the harness says it injected for this attachment, when it
-  /// recorded them.
   var renderedBlocks: [JSONValue]? { raw["rendered"]?.array }
 
   var systemSubtype: String? { raw["subtype"]?.string }
   var compactMetadata: JSONValue? { raw["compactMetadata"] }
   var isCompactSummary: Bool { raw["isCompactSummary"]?.bool ?? false }
 
-  /// Parses `2026-09-20T22:27:44.123Z` by hand. A date formatter would be
-  /// both slower and, being a class, not something a Sendable type can hold.
+  // Parsed by hand: a date formatter is slower and cannot be held by a Sendable type.
   static func parseTimestamp(_ text: String) -> Double? {
     let digits = Array(text.utf8)
     guard digits.count >= 19 else { return nil }

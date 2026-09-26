@@ -1,26 +1,12 @@
 internal import Foundation
 
-/// Finds the sessions on the machine and the little that can be known about
-/// them without parsing: project, title, last activity, liveness.
-///
-/// Titles and last prompts are single-line records the harness appends, so
-/// they are read from the tail of the file rather than by parsing all of it.
 struct SessionDiscovery {
-  /// A file written to this recently counts as live.
   static let liveWindow: TimeInterval = 180
-  /// How much of the tail to scan for title records.
   static let tailBytes = 64 * 1024
-  /// How much of the head to look for the working directory in.
   static let headBytes = 64 * 1024
 
   let root: URL
 
-  /// Sessions on the machine, reusing what a previous scan already learned.
-  ///
-  /// The only expensive part of a scan is reading the tail of every file for
-  /// its title. A file whose size and modification date have not moved cannot
-  /// have gained one, so its title is taken from the previous answer. On this
-  /// machine that is the difference between 0.78 s and a directory listing.
   func sessions(reusing known: [String: SessionRef] = [:]) throws -> [SessionRef] {
     let manager = FileManager.default
     guard let projects = try? manager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
@@ -64,19 +50,14 @@ struct SessionDiscovery {
     return result.sorted { $0.lastActivity > $1.lastActivity }
   }
 
-  /// `-Users-someone-code-api-client` reads better as a path.
-  ///
-  /// It is a guess: the harness writes every character that is not a letter
-  /// or a digit as `-`, so `api-client` comes back as `api/client`. The
-  /// folder the session ran in is taken from the transcript where it says.
+  // A guess: the harness writes every non-alphanumeric character as `-`, so
+  // `api-client` reads `api/client`.
   static func projectName(_ slug: String) -> String {
     slug.hasPrefix("-") ? "/" + slug.dropFirst().replacingOccurrences(of: "-", with: "/") : slug
   }
 
-  /// The `cwd` the first entries of a transcript record, when it is the
-  /// folder the transcript is filed under. Only the head is read, and a
-  /// folder that does not match is not believed: a session can change
-  /// directory on the way, and the folder name is what it started in.
+  // A `cwd` that does not match the folder is not believed: a session can change
+  // directory on the way.
   static func workingDirectory(of url: URL, slug expected: String) -> String? {
     guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
     defer { try? handle.close() }
@@ -93,8 +74,7 @@ struct SessionDiscovery {
     return nil
   }
 
-  /// The last `custom-title` or `ai-title` record in the file, if there is
-  /// one. Only the tail is read: these records are appended.
+  // These records are appended, so only the tail is read.
   static func title(of url: URL) -> String? {
     guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
     defer { try? handle.close() }
@@ -102,9 +82,8 @@ struct SessionDiscovery {
     let start = size > UInt64(tailBytes) ? size - UInt64(tailBytes) : 0
     try? handle.seek(toOffset: start)
     guard let data = try? handle.readToEnd() else { return nil }
-    // The tail almost always starts inside a character, which makes strict
-    // decoding return nil and lose the title. The first partial line is
-    // rubbish either way and is skipped as unparseable.
+    // The tail usually starts mid-character: decode leniently; the partial first
+    // line fails to parse and is skipped.
     let text = String(decoding: data, as: UTF8.self)
     var title: String?
     for line in text.split(separator: "\n") {

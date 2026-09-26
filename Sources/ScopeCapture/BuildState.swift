@@ -1,13 +1,10 @@
 internal import Foundation
 internal import ScopeCore
 
-/// Everything one lane build carries between requests. Kept apart from the
-/// logic so the build loop reads as the sequence of decisions it is.
 struct BuildState {
   var store: EntryStore
   var reader = EntryReader()
   var expansion = ChainExpansion()
-  /// The API calls of this lane, assembled from the entries that carry them.
   var log = RequestLog()
 
   var sizer = SegmentSizer()
@@ -15,57 +12,31 @@ struct BuildState {
   var segments: [Segment] = []
   var judged: [JudgedSegment] = []
   var consumers: [JudgedConsumer] = []
-  /// Entry uuid to the slots of the segments it produced.
   var live: [String: [Int]] = [:]
-  /// Slot to the entry and content block that produced it, so a retirement can
-  /// clean up without scanning every segment and a block's text can be found
-  /// again without anything holding it.
   var owner: [Int: PieceOrigin] = [:]
-  /// Slots currently in the context. Kept so retirement never has to walk the
-  /// whole history to find the live set.
   var liveSlots: Set<Int> = []
-  /// Slots the prior produced when the prefix was derived. A leftover while
-  /// one of these is live is a leftover; a leftover with none of them live is
-  /// a prefix being derived.
   var derivedPrefix: Set<Int> = []
   var attached: [String: [String]] = [:]
-  /// Assistant entry uuid to the request it belongs to, so the request a new
-  /// one continues from can be read off the chain.
   var requestOfEntry: [String: Int] = [:]
   var snapshots: [Snapshot] = []
   var compactionEvents: [CompactionEvent] = []
   var events: [LaneEvent] = []
-  /// Blocks that are prompts the person typed, in the order they entered.
   var prompts: [SegmentID] = []
   var stats = CaptureStats()
-  /// What the transcript records about the prefix, found by a pass over the
-  /// file before it is read as a lane.
   var evidence = PrefixEvidence()
-  /// Where the prefix split came from, recorded at the moment it happened, so
-  /// nothing can claim a source that arrived afterwards.
   var prefixSourceAtSplit: PrefixSplit.Source?
-  /// True when prefix evidence arrived after the prefix had been derived. The
-  /// lane it describes is the one from the first request, so the capture is
-  /// built again rather than patched.
   private(set) var needsRestart = false
-  /// Requests met in file order. It is not the same as the number published,
-  /// which depends on how much of the file has been handed over at once, and
-  /// a `/context` run has to remember the same request however the file was
-  /// read.
+  // Counted in file order, not published order, so a `/context` report maps to
+  // the same request however much of the file was read at once.
   private var requestsSeen = 0
   private var lastRequestKey = ""
 
-  /// Takes evidence found before the file was read as a lane.
   mutating func adopt(_ found: PrefixEvidence) {
     guard prefixSourceAtSplit == nil else { return }
     evidence = found
   }
 
-  /// Which entry, and which item of it, a segment came from.
   struct PieceOrigin: Sendable, Hashable {
-    /// Which list of the entry `index` counts in. A snapshot's system prompt
-    /// blocks and tool definitions are the prefix, so they are born at the
-    /// first request while the record that holds them arrives later.
     enum Kind: Sendable, Hashable {
       case block
       case systemBlock
@@ -81,8 +52,6 @@ struct BuildState {
     store = EntryStore(url: url)
   }
 
-  /// Takes one line of the transcript. Nothing is decided here: entries are
-  /// indexed and requests are collected until they are known to be finished.
   mutating func ingest(_ entry: TranscriptEntry) {
     store.keep(entry)
     reader.learn(from: entry)
@@ -92,10 +61,7 @@ struct BuildState {
       || ContextUsage.isReport(entry)
     {
       if ContextUsage.isReport(entry) { stats.contextReports += 1 }
-      // Evidence that turns up after the prefix was derived describes that
-      // same prefix, so the lane has to be built again from the start.
-      // The request it was run at is the last one before it in the file, which
-      // is the one a person reading the report was looking at.
+      // A report belongs to the last request before it in the file.
       let at = max(0, requestsSeen - 1)
       if evidence.learn(from: entry, at: at), prefixSourceAtSplit != nil { needsRestart = true }
       return
@@ -115,8 +81,6 @@ struct BuildState {
     log.ingest(entry)
   }
 
-  /// Publishes every request that has started and brings the ones that grew up
-  /// to date.
   mutating func advanceRequests(final: Bool) -> RequestLog.Advance {
     let advance = log.advance(final: final)
     for index in advance.published + advance.grown {
@@ -125,15 +89,10 @@ struct BuildState {
     return advance
   }
 
-  /// Lets go of the requests that have been stepped through. Only here,
-  /// because stepping one needs its blocks.
   mutating func settleRequests(final: Bool) {
     stats.unfinishedResponses += log.settle(final: final)
   }
 
-  /// Takes the output side of a request again after more of it arrived. The
-  /// segments it produced are not touched: they enter at the next request,
-  /// which has not happened yet.
   mutating func regrow(request index: Int) {
     let request = log.requests[index]
     consumers[index] = JudgedConsumer(
@@ -151,8 +110,6 @@ struct BuildState {
     )
   }
 
-  /// Records an inferred retirement and drops the retired slots from the live
-  /// map, which is why every slot remembers its owner.
   mutating func note(_ retirement: LaneBuilder.Retirement, at index: Int) {
     stats.inferredRetirements += retirement.count
     stats.inferredRetirementTokens += retirement.tokens
@@ -181,7 +138,6 @@ struct BuildState {
     )
   }
 
-  /// Gives the entering pieces their sizes and puts them into the context.
   mutating func materialize(
     _ entering: LaneBuilder.Entering,
     sized: [Tokens],
@@ -215,13 +171,8 @@ struct BuildState {
         JudgedSegment(
           id: id,
           born: index,
-          // A tool definition is judged by whether its tool was called, the
-          // same rule the prefix's tool blocks follow. Everything else is
-          // judged by its words.
           isAssessable: pending.toolName != nil
             || BandRegistry.isAssessable(pending.band),
-          // What the model produced points at the request that produced it.
-          // Everything else came in from outside.
           isInput: pending.originRequest == nil,
           shingles: pending.toolName.map { [Shingler.toolCall($0)] }
             ?? (pending.contentClass == .image
@@ -231,9 +182,6 @@ struct BuildState {
     }
   }
 
-  /// Closes one request: its snapshot, its consumer, and the events that the
-  /// transcript recorded or the numbers imply.
-  /// The request the chain currently ends in: what this one continues from.
   func parentRequest(before index: Int) -> Int? {
     for uuid in tracker.chain.reversed() {
       if let found = requestOfEntry[uuid], found < index { return found }

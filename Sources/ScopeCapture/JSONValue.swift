@@ -1,9 +1,6 @@
 internal import Foundation
 
-/// A tolerant JSON value. Transcripts change shape between harness versions:
-/// a field that is a string today is a list tomorrow, and new entry types
-/// appear without warning. Decoding into fixed types would fail on the next
-/// release, so the adapter reads values it recognises and ignores the rest.
+// Untyped on purpose: transcript shapes change between harness versions.
 enum JSONValue: Sendable, Hashable {
   case null
   case bool(Bool)
@@ -21,10 +18,8 @@ enum JSONValue: Sendable, Hashable {
   init(any value: Any) {
     switch value {
     case let value as String:
-      // JSONSerialization hands back bridged NSStrings. Every later read of
-      // one goes through the slow foreign path, which was about a third of
-      // the run time on a large session. Making it contiguous once here is
-      // the whole fix.
+      // JSONSerialization returns bridged NSStrings; making them native once avoids
+      // the slow foreign path on every later read.
       var contiguous = value
       contiguous.makeContiguousUTF8()
       self = .string(contiguous)
@@ -35,7 +30,8 @@ enum JSONValue: Sendable, Hashable {
       for (key, item) in value { object[key] = JSONValue(any: item) }
       self = .object(object)
     case let value as NSNumber:
-      // NSNumber hides whether the literal was a bool, an int or a double.
+      // NSNumber hides whether the literal was a bool, an int or a double. 9e15 keeps
+      // the integer inside the range a Double holds exactly.
       if CFGetTypeID(value) == CFBooleanGetTypeID() {
         self = .bool(value.boolValue)
       } else if value.doubleValue == value.doubleValue.rounded(),
@@ -95,8 +91,6 @@ enum JSONValue: Sendable, Hashable {
     return nil
   }
 
-  /// Back to the Foundation shapes, for the one place that needs real JSON
-  /// out again rather than a length or a field.
   var anyValue: Any {
     switch self {
     case .null: NSNull()
@@ -109,13 +103,6 @@ enum JSONValue: Sendable, Hashable {
     }
   }
 
-  /// The value as JSON, re-rendered: keys in a fixed order, and indented when
-  /// a person is going to read it.
-  ///
-  /// The order is alphabetical rather than the order the transcript wrote,
-  /// because parsing an object into a dictionary loses that. Fixed is what
-  /// matters: the same definition renders the same way every time it is read
-  /// back, so the window, the estimator and the judge all see one text.
   func jsonText(pretty: Bool = true) -> String {
     var options: JSONSerialization.WritingOptions = [
       .sortedKeys, .withoutEscapingSlashes, .fragmentsAllowed,
@@ -126,8 +113,6 @@ enum JSONValue: Sendable, Hashable {
     return String(decoding: data, as: UTF8.self)
   }
 
-  /// Compact re-encoding, used to size tool call inputs the way the wire
-  /// carries them.
   var compactText: String {
     switch self {
     case .null: "null"

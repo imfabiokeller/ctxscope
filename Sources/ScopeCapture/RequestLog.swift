@@ -1,40 +1,25 @@
 internal import Foundation
 
-/// The API calls of one lane, assembled out of the entries that carry them.
-///
-/// The prompt side of a request is final on its first entry: every entry of a
-/// request repeats the same input, cache read and cache write. So a request is
-/// published as soon as it starts, and the rest of its response is folded in
-/// as it arrives. Holding it back until the next request started meant the
-/// fill at the end of a turn was stale until the next prompt.
+// Every entry of a request repeats the same prompt usage, so a request is
+// published on its first entry and the rest of its response folded in later.
 struct RequestLog {
-  /// Requests in the order the calls happened.
   private(set) var requests: [LaneBuilder.RequestGroup] = []
   private(set) var byKey: [String: LaneBuilder.RequestGroup] = [:]
   private(set) var indexByKey: [String: Int] = [:]
-  /// The compaction boundary that belongs to a request, by request index.
   private(set) var compactions: [Int: JSONValue] = [:]
 
-  /// Keys in order, with the entries of the ones that can still grow.
   private var keys: [String] = []
   private var entries: [String: [TranscriptEntry]] = [:]
   private var published: Set<String> = []
   private var grown: Set<String> = []
-  /// A compaction boundary belongs to the next call that starts after it, not
-  /// to the next one that happens to finish. Binding it to the key as soon as
-  /// that call appears is what keeps the two the same whether the file is read
-  /// in one go or a line at a time.
+  // Bound to the next call that starts, not the next that finishes, so a whole
+  // read and a line-at-a-time read agree.
   private var pendingCompaction: JSONValue?
   private var compactionByKey: [String: JSONValue] = [:]
-  /// How many keys have been settled: counted, and their entries let go.
   private var settled = 0
 
-  /// What one pass over newly arrived lines did to the list.
   struct Advance {
-    /// Requests that appeared, to be stepped through for the first time.
     var published: Range<Int>
-    /// Requests already published whose response grew, so their output side
-    /// has to be taken again.
     var grown: [Int] = []
   }
 
@@ -42,7 +27,6 @@ struct RequestLog {
     pendingCompaction = metadata
   }
 
-  /// Files one entry under the call it belongs to.
   mutating func ingest(_ entry: TranscriptEntry) {
     let key = entry.requestID ?? entry.uuid ?? UUID().uuidString
     if entries[key] == nil {
@@ -88,13 +72,7 @@ struct RequestLog {
     return advance
   }
 
-  /// Lets go of the requests that can no longer grow, once the caller has
-  /// finished with them. Returns how many of them never reported a stop
-  /// reason.
-  ///
-  /// A settled request keeps its usage, its key, its entry uuids and what was
-  /// worked out from its blocks, never the parsed blocks themselves: on a 1021
-  /// request lane those held 99 MB of dictionaries for the rest of the session.
+  // Keeps the last request unless `final`: more of it can still arrive.
   mutating func settle(final: Bool) -> Int {
     var unfinished = 0
     let settleTo = final ? keys.count : max(0, keys.count - 1)

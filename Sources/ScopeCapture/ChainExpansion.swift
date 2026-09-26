@@ -1,20 +1,9 @@
 internal import Foundation
 
-/// Parallel tool calls break the parent chain.
-///
-/// Claude Code writes one assistant entry per `tool_use` block, and each
-/// result's `parentUuid` is its own `tool_use` entry. When a response makes
-/// several calls at once, the chain continues through the last result only,
-/// and every sibling result hangs off the chain. On this machine that is 73 of
-/// 572 tool results in one session and 80 of 1078 in another: real prompt
-/// content that a parent walk alone never sees.
-///
-/// This puts them back. A result belongs in the context exactly when its
-/// `tool_use` entry does, so it is attached to that entry and leaves with it.
+// Claude Code writes one entry per `tool_use`, so with parallel calls only the
+// last result is on the parent chain. Siblings are attached to their call here.
 struct ChainExpansion {
-  /// tool_use id to the uuid of the entry carrying its result.
   private var resultEntry: [String: String] = [:]
-  /// entry uuid to the tool_use ids it issued.
   private var toolUses: [String: [String]] = [:]
 
   init() {}
@@ -43,17 +32,12 @@ struct ChainExpansion {
   }
 
   struct Expansion {
-    /// Entries entering the context, in prompt order.
     var added: [String]
-    /// Results attached to an entry, so they leave when it does.
     var attached: [String: [String]]
-    /// Tool calls that entered, and how many of them brought their result.
     var toolCalls: Int
     var toolCallsWithResult: Int
   }
 
-  /// Expands what the parent walk added with the results that hang off it.
-  /// `isMaterialized` answers whether an entry already has segments.
   func expand(
     added: [String],
     isMaterialized: (String) -> Bool
@@ -75,8 +59,7 @@ struct ChainExpansion {
 
     for uuid in added {
       guard let ids = toolUses[uuid] else {
-        // A user or attachment entry ends the run of calls, and the results
-        // of that run belong in front of it.
+        // A user or attachment entry ends a run of calls; the run's results go in front of it.
         flush()
         order.append(uuid)
         continue

@@ -1,14 +1,11 @@
 public import Foundation
 internal import ScopeCore
 
-/// Reads Claude Code transcripts. `~/.claude/projects` is input only: this
-/// never writes, moves or locks anything under it.
+// `~/.claude/projects` is input only: never write, move or lock anything under it.
 public struct ClaudeCodeAdapter: HarnessAdapter {
   public let name = "claude-code"
   public let root: URL
-  /// A window to measure fill against, when the caller knows it. Nothing in a
-  /// transcript says which window a session ran with, so when this is nil the
-  /// lane infers a lower bound from what it was seen to hold.
+  // A transcript never says its window; when nil, the lane infers a lower bound.
   public let contextWindow: Int?
 
   public init(root: URL? = nil, contextWindow: Int? = nil) {
@@ -18,8 +15,6 @@ public struct ClaudeCodeAdapter: HarnessAdapter {
     self.contextWindow = contextWindow
   }
 
-  /// The folder under `projects` the harness files a session that ran in
-  /// `path` under: every character that is not a letter or a digit is `-`.
   public static func folderName(of path: String) -> String {
     String(path.map { $0.isASCII && ($0.isLetter || $0.isNumber) ? $0 : "-" })
   }
@@ -52,7 +47,6 @@ public struct ClaudeCodeAdapter: HarnessAdapter {
     return capture.finish()
   }
 
-  /// A session kept open, for following one as it grows.
   public func open(_ session: SessionRef, includeSubagents: Bool = true) -> SessionCapture {
     SessionCapture(session: session, includeSubagents: includeSubagents, window: window)
   }
@@ -69,8 +63,6 @@ public struct ClaudeCodeAdapter: HarnessAdapter {
     let toolUseID: String?
   }
 
-  /// Subagent runs live beside the session in `<session-uuid>/subagents/`,
-  /// one JSONL plus a meta file that names the tool call that spawned it.
   static func subagents(of session: SessionRef) throws -> [SubagentRef] {
     let directory = session.url.deletingPathExtension().appending(path: "subagents")
     let manager = FileManager.default

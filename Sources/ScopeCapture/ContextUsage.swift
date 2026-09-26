@@ -1,25 +1,12 @@
 internal import Foundation
 internal import ScopeCore
 
-/// Reads the harness's own `/context` report out of a transcript.
-///
-/// Claude Code writes the run as a `system` entry with
-/// `subtype: "local_command"`, a markdown `content` for the transcript view
-/// and a structured `contextUsage` object beside it. The object is what is
-/// read here: the markdown is the same numbers rounded to a tenth of a
-/// thousand.
-///
-/// Everything about it is optional. A version that writes a shape this does
-/// not know returns nothing and the lane falls back to what it had, which is
-/// why every lookup below is a question rather than an assumption.
+// Claude Code writes `/context` as a `system` `local_command` entry; its
+// `contextUsage` object is exact, the markdown beside it is rounded.
 enum ContextUsage {
-  /// Categories that are in the context. The harness also lists deferred tool
-  /// schemas, an autocompact buffer and free space, which are not.
+  // The harness also lists deferred tools, the autocompact buffer and free space.
   static let usedKind = "used"
 
-  /// Category names, as the harness writes them. Matched case insensitively
-  /// and only against categories it marked as being in the context, so a
-  /// renamed deferred category can never be taken for a used one.
   enum Category: String, CaseIterable {
     case systemPrompt = "system prompt"
     case systemTools = "system tools"
@@ -29,8 +16,6 @@ enum ContextUsage {
     case messages = "messages"
   }
 
-  /// Whether an entry is a `/context` run at all, which is cheaper to ask than
-  /// whether it parses into a report.
   static func isReport(_ entry: TranscriptEntry) -> Bool {
     entry.kind == "system" && entry.systemSubtype == "local_command"
       && entry.raw["contextUsage"] != nil
@@ -44,8 +29,7 @@ enum ContextUsage {
     var tokens: [Category: Int] = [:]
     let marked = rows.contains { $0["kind"]?.string != nil }
     for row in rows {
-      // With no `kind` written at all, a category is taken at its name: the
-      // deferred ones say so in theirs.
+      // With no `kind` written at all, deferred categories are known by their names.
       let kind = row["kind"]?.string
       guard marked ? kind == usedKind : !Self.namesDeferred(row) else { continue }
       guard let name = row["name"]?.string?.lowercased(),
@@ -72,9 +56,8 @@ enum ContextUsage {
     return name.contains("deferred") || name.contains("free") || name.contains("buffer")
   }
 
-  /// The per tool rows of the report. They cover the tools that are loaded and
-  /// the ones that are only deferred, and nothing in a row says which, so the
-  /// prompt snapshot's own tool list is what picks the loaded ones out later.
+  // Rows cover loaded and deferred tools alike and do not say which; the
+  // snapshot's tool list picks the loaded ones.
   private static func mcpTools(_ usage: JSONValue) -> [ContextReport.Tool] {
     (usage["mcp_tools"]?.array ?? []).compactMap { row in
       guard let name = row["name"]?.string, let tokens = row["tokens"]?.int else { return nil }
@@ -87,14 +70,6 @@ enum ContextUsage {
     }
   }
 
-  /// The report as it applies to this lane: the categories the harness
-  /// reported, with the tools of the request named.
-  ///
-  /// The report's own MCP rows are dropped for any tool the snapshot does not
-  /// name, because those are the deferred ones. On the session this was read
-  /// from, the 30 rows the snapshot names sum to 14896 tokens, which is the
-  /// MCP category exactly, while all 242 rows sum to 133378, which is that
-  /// plus the deferred category exactly.
   static func joined(_ report: ContextReport, tools: [ContextReport.Tool]) -> ContextReport {
     guard !tools.isEmpty else { return report }
     let reported = Dictionary(

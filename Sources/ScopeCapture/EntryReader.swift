@@ -1,17 +1,9 @@
 internal import Foundation
 internal import ScopeCore
 
-/// Turns one transcript entry into the content pieces it contributes to a
-/// prompt. Nothing here measures anything: sizes are the sizer's job.
 struct EntryReader {
-  /// tool_use id to tool name, so a tool result can be put in the band of the
-  /// tool that produced it.
   var toolNames: [String: String] = [:]
-  /// tool_use id to the assistant entry that made the call, so a result's
-  /// detail can be read off the call's input.
   var toolCalls: [String: String] = [:]
-  /// User entries that are prompts the person typed, decided in file order
-  /// by `TypedPrompts`, so reading an entry again later names the same block.
   var promptEntries: Set<String> = []
   private var prompts = TypedPrompts()
 
@@ -45,8 +37,6 @@ struct EntryReader {
           contentClass: ContentClassifier.classify(text), role: .output,
           subject: .firstLine(head: "Assistant text"))
       case "thinking":
-        // The stored text is a summary. It is kept for the reader and for
-        // the judge, but it never decides the size.
         return ContentPiece(
           band: .think, label: "Thinking", text: block["thinking"]?.string ?? "",
           contentClass: .prose, role: .thinking, subject: .firstLine(head: "Thinking"))
@@ -133,10 +123,7 @@ struct EntryReader {
     }
   }
 
-  /// Drops a leading line number from every line. The harness writes file
-  /// reads as `   12\tcontent` or `   12->content`, and those numbers are in
-  /// the prompt but can never appear in an edit, so they only ever break
-  /// matches.
+  // The harness writes file reads as `   12\tcontent` or `   12->content`.
   static func withoutLineNumbers(_ text: String) -> String {
     var out = ""
     out.reserveCapacity(text.count)
@@ -162,8 +149,7 @@ struct EntryReader {
   }
 
   private func imagePiece(_ block: JSONValue, band: Band) -> ContentPiece {
-    // The base64 payload says nothing about the token count, so it gets its
-    // own content class and its own rate.
+    // Base64 length says nothing about tokens, so images get their own class and rate.
     let data = block["source"]?["data"]?.string ?? ""
     return ContentPiece(
       band: band, label: "Image", text: data, contentClass: .image, role: .input)

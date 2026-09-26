@@ -1,10 +1,3 @@
-/// Keeps the current prompt chain and answers what changed when the next
-/// request starts from a different leaf.
-///
-/// A transcript is a tree: rewinds and edited prompts branch it, and a
-/// compaction restarts it. Recomputing the whole chain per request would be
-/// quadratic, so this walks up only as far as the first entry both chains
-/// share, which is what makes a growing session cost only its new lines.
 struct ChainTracker {
   private(set) var chain: [String] = []
   private var position: [String: Int] = [:]
@@ -12,13 +5,9 @@ struct ChainTracker {
   struct Change {
     var added: [String]
     var removed: [String]
-    /// True when the walk found no entry the previous chain also had. The
-    /// whole context changed at once, which is either a compaction, a new
-    /// conversation, or a transcript whose history is missing.
     var restarted: Bool
   }
 
-  /// Moves to the chain that ends at `leaf`. `parent` walks one step up.
   mutating func move(to leaf: String?, parent: (String) -> String?) -> Change {
     var collected: [String] = []
     var seen: Set<String> = []
@@ -29,8 +18,7 @@ struct ChainTracker {
         anchor = index
         break
       }
-      // A malformed transcript can point a parent at a descendant. Stop at
-      // the first uuid seen twice rather than walking a cycle.
+      // A malformed transcript can point a parent at a descendant: stop on a repeat.
       guard seen.insert(uuid).inserted else { break }
       collected.append(uuid)
       cursor = parent(uuid)

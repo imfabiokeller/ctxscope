@@ -1,16 +1,7 @@
 internal import Foundation
 
-/// Reads a JSONL transcript line by line and remembers where it stopped, so a
-/// growing file costs only its new lines.
-///
-/// It reads in chunks and parses each line as it completes, so the whole file
-/// is never held at once. A 117 MB session is 117 MB of transcript, not of
-/// memory.
-///
-/// The file is input, never output: nothing here writes, moves or locks it.
+// The file is input only: nothing here writes, moves or locks it.
 struct JSONLReader: Sendable {
-  /// Large enough that the syscall overhead disappears, small enough that the
-  /// buffer is never the thing that matters.
   static let chunkSize = 1 << 20
 
   struct Position: Sendable, Hashable {
@@ -23,8 +14,6 @@ struct JSONLReader: Sendable {
     static let start = Position()
   }
 
-  /// One parsed line and where it sits in the file, so its content can be
-  /// read again later without keeping it in memory.
   struct Line: Sendable {
     let value: JSONValue
     let range: EntryRange
@@ -33,14 +22,12 @@ struct JSONLReader: Sendable {
   struct Result: Sendable {
     let entries: [Line]
     let position: Position
-    /// Lines that were not valid JSON. A transcript being appended to can end
-    /// in half a line, which is normal, not an error.
+    // A file being appended to can end in half a line; that is normal.
     let skipped: Int
   }
 
   let url: URL
 
-  /// Reads every complete line after `position`.
   func read(from position: Position = .start) throws -> Result {
     var entries: [Line] = []
     var skipped = 0
@@ -54,9 +41,6 @@ struct JSONLReader: Sendable {
     return Result(entries: entries, position: end, skipped: skipped)
   }
 
-  /// Hands every complete line after `position` to `body`, with where that
-  /// line sits in the file, holding one chunk and one line at a time. Returns
-  /// where the last complete line ended.
   @discardableResult
   func stream(from position: Position = .start, _ body: (Data, EntryRange) throws -> Void) throws
     -> Position
@@ -67,11 +51,8 @@ struct JSONLReader: Sendable {
 
     var consumed = position.offset
     var remainder = Data()
-    // One pool per chunk and one per line. `JSONSerialization` hands back
-    // autoreleased Foundation objects, and without a pool to drain them a
-    // read of a 117 MB session left 295 MB of buffers and strings alive until
-    // the process ended. Draining them costs nothing and was the difference
-    // between 571 MB and 322 MB of peak memory.
+    // `JSONSerialization` returns autoreleased objects; without these pools they
+    // stay alive until the process ends.
     while true {
       let done = try autoreleasepool { () -> Bool in
         guard let chunk = try handle.read(upToCount: Self.chunkSize), !chunk.isEmpty else {

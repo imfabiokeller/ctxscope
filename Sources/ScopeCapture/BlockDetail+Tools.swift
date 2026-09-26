@@ -1,22 +1,13 @@
 internal import Foundation
 internal import ScopeCore
 
-/// A tool call's detail: the input that says what the call did.
 extension BlockDetail {
-  /// Inputs that say what an unknown tool was asked, in the order they are
-  /// looked for.
+  // Order matters: the first key present wins.
   static let telling = [
     "description", "query", "pattern", "url", "file_path", "path", "skill", "subject",
     "summary", "command", "prompt",
   ]
 
-  /// The detail of a call to `tool` with `input`. `result` is what the
-  /// harness recorded about the result beside it, when there is one, which
-  /// is where a search's count is. `project` is the folder the session ran
-  /// in. Nil when the input says nothing that could be shown.
-  ///
-  /// The call itself is headed "Bash call", so it does not read as the
-  /// result it asked for.
   static func tool(
     _ tool: String, input: JSONValue?, result: JSONValue? = nil, project: String?,
     isCall: Bool = false
@@ -57,7 +48,6 @@ extension BlockDetail {
     }
   }
 
-  /// "github" and "create_issue" of "mcp__github__create_issue".
   static func mcp(_ tool: String) -> (String, String)? {
     guard tool.hasPrefix("mcp__") else { return nil }
     let parts = tool.dropFirst(5).components(separatedBy: "__")
@@ -65,7 +55,6 @@ extension BlockDetail {
     return (parts[0], parts.dropFirst().joined(separator: "__"))
   }
 
-  /// A URL's host and path, without the scheme, the query or "www.".
   static func place(_ url: String) -> String {
     guard let parts = URLComponents(string: url), let host = parts.host else { return cut(url) }
     let bare = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
@@ -73,8 +62,6 @@ extension BlockDetail {
     return middle(bare + path, limit: limit)
   }
 
-  /// "212 matches" or "8 files", from what the harness recorded about a
-  /// search's result.
   private static func count(_ tool: String, _ result: JSONValue?) -> String? {
     guard let result else { return nil }
     let mode = result["mode"]?.string

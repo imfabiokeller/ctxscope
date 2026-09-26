@@ -1,18 +1,11 @@
 internal import Foundation
 internal import ScopeCore
 
-/// Reads blocks' details back out of a lane's transcript, one entry at a
-/// time.
-///
-/// Blocks of one entry sit in neighbouring slots, and a result's call is
-/// usually the entry just before it, so the last few entries read are kept
-/// for the length of one pass and nothing past it.
 struct DetailReader {
   let store: EntryStore
   let reader: EntryReader
   private var recent: [String: TranscriptEntry] = [:]
   private var order: [String] = []
-  /// Entries kept while reading.
   private static let kept = 8
 
   init(store: EntryStore, reader: EntryReader) {
@@ -20,8 +13,6 @@ struct DetailReader {
     self.reader = reader
   }
 
-  /// The detail of the piece at `index` of the entry `uuid`. Nil when the
-  /// entry cannot be read back or the piece says nothing that could be shown.
   mutating func detail(entry uuid: String, piece index: Int) -> BlockDetail? {
     guard let entry = entry(uuid) else { return nil }
     let pieces = reader.pieces(of: entry)
@@ -47,7 +38,6 @@ struct DetailReader {
     }
   }
 
-  /// The input of the tool call `id` in an assistant entry.
   private static func input(of id: String, in entry: TranscriptEntry) -> JSONValue? {
     entry.blocks.first { $0["type"]?.string == "tool_use" && $0["id"]?.string == id }?["input"]
   }
