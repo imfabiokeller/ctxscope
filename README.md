@@ -1,6 +1,11 @@
-# ctxscope
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-logo-dark.svg">
+    <img alt="ctxscope" src="docs/images/readme-logo-light.svg" height="72">
+  </picture>
+</h1>
 
-**A spectrum analyzer for your agent's context window.**
+<p align="center"><strong>A spectrum analyzer for your agent's context window.</strong></p>
 
 In a studio you never mix by ear alone. You put an analyzer on the bus and
 suddenly you can *see* it: the mud at 300 Hz, the hi-hat eating the top end,

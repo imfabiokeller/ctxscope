@@ -21,6 +21,10 @@ for bundle in "$binary"/*.bundle; do
   cp -R "$bundle" "$contents/Resources/"
 done
 
+xcrun actool Resources/Assets.xcassets --compile "$contents/Resources" \
+  --platform macosx --minimum-deployment-target 15.0 --app-icon AppIcon \
+  --output-partial-info-plist "build/AppIcon.plist" >/dev/null
+
 cat > "$contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -32,6 +36,8 @@ cat > "$contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key><string>dev.fabiokeller.ctxscope</string>
   <key>CFBundleExecutable</key><string>ctxscope</string>
   <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleIconName</key><string>AppIcon</string>
   <key>CFBundleShortVersionString</key><string>0.1</string>
   <key>CFBundleVersion</key><string>3</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
