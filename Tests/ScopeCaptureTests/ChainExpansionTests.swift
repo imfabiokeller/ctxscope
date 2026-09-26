@@ -6,9 +6,8 @@ import Testing
 
 @Suite("Chain expansion")
 struct ChainExpansionTests {
-  /// One request issuing two calls, written the way Claude Code writes it:
-  /// one entry per tool_use, and each result parented to its own call, so the
-  /// parent chain runs through the second result only.
+  /// As Claude Code writes it: one entry per tool_use, each result parented to its own call,
+  /// so the parent chain runs through the second result only.
   static func parallelEntries() throws -> [TranscriptEntry] {
     func entry(_ json: String) throws -> TranscriptEntry {
       TranscriptEntry(try JSONValue(parsing: Data(json.utf8)))

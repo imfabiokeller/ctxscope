@@ -5,8 +5,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// A session whose subagent lane grows while its main lane stands still,
-/// which is what a subagent working for five minutes looks like.
 private final class LaneGrowing: OpenSession, @unchecked Sendable {
   let session: SessionRef
   private(set) var captured: CapturedSession
@@ -20,8 +18,6 @@ private final class LaneGrowing: OpenSession, @unchecked Sendable {
     captured = Self.cut(full, lane: laneRequests)
   }
 
-  /// Every refresh gives the subagent lane one more request and the main lane
-  /// none.
   func refresh() throws -> Bool {
     guard let main = full.mainLane, laneRequests < main.snapshots.count else { return false }
     laneRequests += 1
@@ -72,9 +68,6 @@ private struct LaneFeed: SessionFeed {
   }
 }
 
-/// A subagent is where the interesting part of a session often is, and it was
-/// invisible: only the `subagents` directory was watched, never the lane files
-/// in it, so a lane could grow for minutes while the item dimmed to idle.
 @Suite("a subagent at work")
 @MainActor
 struct SubagentWatchTests {
@@ -100,8 +93,7 @@ struct SubagentWatchTests {
     return Home(transcript: transcript, lanes: lanes, lane: lane)
   }
 
-  /// The directory listing resolves symlinks and the temporary directory is
-  /// one, so both sides are compared resolved.
+  /// The temporary directory is a symlink and the listing resolves it, so compare resolved.
   private func watches(_ model: InstrumentModel, _ url: URL) -> Bool {
     model.watchedPaths.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
       .contains(url.resolvingSymlinksInPath().path)
@@ -136,7 +128,6 @@ struct SubagentWatchTests {
     let before = model.recording?.lane(LaneID("agent-1"))?.snapshots.count ?? 0
     model.liveness.clear()
 
-    // Nothing is written to the main transcript at all.
     let stamp = try FileManager.default.attributesOfItem(atPath: home.transcript.path)
     let handle = try FileHandle(forWritingTo: home.lane)
     try handle.seekToEnd()
@@ -159,8 +150,6 @@ struct SubagentWatchTests {
     let model = await model(home, SyntheticRecording.make())
     #expect(!watches(model, home.lanes))
 
-    // The agent spawns a subagent: the directory and its lane appear in the
-    // project directory, and nothing is written to the main transcript.
     try FileManager.default.createDirectory(at: home.lanes, withIntermediateDirectories: true)
     try Data("{}\n".utf8).write(to: home.lane)
 

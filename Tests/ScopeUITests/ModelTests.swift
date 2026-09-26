@@ -26,8 +26,6 @@ struct ModelTests {
     return model
   }
 
-  /// Every second segment referenced at the request after it entered, so the
-  /// two encodings have something to show.
   static func judgeInput(_ recording: Recording) -> JudgeInput {
     guard let lane = recording.mainLane else { return JudgeInput() }
     var segments: [JudgedSegment] = []
@@ -65,7 +63,6 @@ struct ModelTests {
     #expect(model.list.focused == entries[1].id)
     #expect(model.recording?.sessionID == entries[1].id)
 
-    // Nothing focused is an empty window, not the newest session.
     model.focus(session: nil)
     await model.settle()
     #expect(model.recording == nil)

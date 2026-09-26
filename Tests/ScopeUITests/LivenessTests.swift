@@ -4,8 +4,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// M2: liveness comes from when the session was last written to, and from
-/// nothing else.
 @Suite("Liveness")
 @MainActor
 struct LivenessTests {
@@ -42,7 +40,6 @@ struct LivenessTests {
     liveness.saw(activity: now.addingTimeInterval(-Liveness.window - 1), now: now)
     #expect(!liveness.isLive)
     await settle()
-    // Nothing was scheduled, because there is nothing to wait for.
     #expect(clock.waited.isEmpty)
   }
 
@@ -70,8 +67,6 @@ struct LivenessTests {
     #expect(liveness.isLive)
     #expect(clock.waited.count == 2)
     #expect(clock.waited.last == Liveness.window)
-    // The first wait was cancelled, so when time passes it cannot drop a
-    // session that has been written to since.
     clock.release()
     await settle()
     #expect(!liveness.isLive)
@@ -89,8 +84,6 @@ struct LivenessTests {
     #expect(!liveness.isLive)
   }
 
-  /// The menu bar asks the model, and the model asks this. A session whose
-  /// file was written long ago is not live, however recently it was read.
   @Test("a session read from an old file is not live")
   func oldFile() async {
     let clock = HeldClock()
@@ -101,8 +94,7 @@ struct LivenessTests {
     model.focus(session: model.list.entries.first?.id)
     await model.settle()
     await settle()
-    // The test feed dates its sessions in 1970, which is what an idle session
-    // looks like.
+    // The test feed dates its sessions in 1970.
     #expect(!model.liveness.isLive)
     #expect(StatusReading.make(from: model)?.isLive == false)
     #expect(clock.waited.isEmpty)

@@ -54,7 +54,6 @@ struct JSONLReaderTests {
     #expect(second.entries.count == 2)
     #expect(second.entries.map { $0.value["type"]?.string } == ["attachment", "system"])
     #expect(second.position.offset > first.position.offset)
-    // And reading again from there returns nothing at all.
     #expect(try JSONLReader(url: url).read(from: second.position).entries.isEmpty)
   }
 
@@ -91,7 +90,6 @@ struct TranscriptEntryTests {
 
 @Suite("ChainTracker")
 struct ChainTrackerTests {
-  /// root -> a -> b -> c, and a branch root -> a -> d
   private let parents = ["a": "root", "b": "a", "c": "b", "d": "a", "root": nil as String?]
 
   @Test("moving forward only adds")

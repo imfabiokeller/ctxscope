@@ -122,7 +122,6 @@ struct LexicalJudgeTests {
       consumers: [
         JudgedConsumer(request: 1, shingles: shingles(half)),
         JudgedConsumer(request: 2, shingles: []),
-        // The same words again are not more reuse.
         JudgedConsumer(request: 3, shingles: shingles(half)),
         JudgedConsumer(request: 4, shingles: shingles(whole)),
       ]
@@ -130,7 +129,6 @@ struct LexicalJudgeTests {
     let finding = try #require(judge(input).bySegment()[SegmentID(0)])
     #expect(finding.referenceRequests == [1, 4])
     #expect(finding.firstReference == 1)
-    // The counts are cumulative, so the share only ever grows.
     #expect(finding.matchedCounts.count == 2)
     #expect(finding.matchedCounts[0] < finding.matchedCounts[1])
     #expect(finding.assessedShingles == shingles(whole).count)
@@ -147,8 +145,6 @@ struct LexicalJudgeTests {
     judge.add(consumer: JudgedConsumer(request: 2, shingles: shingles(part)))
     let early = try #require(judge.report().bySegment()[SegmentID(0)])
 
-    // Nothing had happened before request 2, and what had happened by 2 is
-    // what the view shows at 2 and at everything after it, until more happens.
     #expect(early.share(at: 0) == 0)
     #expect(early.share(at: 1) == 0)
     let atTwo = try #require(early.share(at: 2))
@@ -156,13 +152,11 @@ struct LexicalJudgeTests {
     #expect(atTwo < 1)
     #expect(early.share(at: 9) == atTwo)
 
-    // A later reference must not move what the earlier requests showed.
     judge.add(consumer: JudgedConsumer(request: 6, shingles: shingles(whole)))
     let later = try #require(judge.report().bySegment()[SegmentID(0)])
     #expect(later.share(at: 2) == atTwo)
     #expect(later.share(at: 5) == atTwo)
     #expect((later.share(at: 6) ?? 0) > atTwo)
-    // Monotone the whole way.
     var last = 0.0
     for request in 0...10 {
       let share = later.share(at: request) ?? 0
@@ -195,8 +189,6 @@ struct LexicalJudgeTests {
     }
     #expect(batch.report().findings == streamed.report().findings)
 
-    // Asking for a report as the lane grows must not change the answer: only
-    // the segments that moved are recomputed, so a stale one would show here.
     var asked = LexicalJudge()
     for index in 0..<40 {
       asked.add(segment: segments[index])
@@ -223,7 +215,7 @@ struct LexicalJudgeTests {
         consumers: [
           JudgedConsumer(request: 1, shingles: common)
         ]))
-    // Every segment was hit, but only on the boilerplate, so nothing counts.
+    // Every segment was hit, but only on the boilerplate.
     #expect(judge.report().findings.allSatisfy { ($0.referencedShare ?? 0) == 0 })
   }
 
@@ -234,9 +226,7 @@ struct LexicalJudgeTests {
     judge.add(
       segment: JudgedSegment(
         id: SegmentID(0), born: 0, isAssessable: true, isInput: true, shingles: shingles(text)))
-    // Sixty responses that all quote it. Counting those towards the document
-    // frequency put the shingle over the cutoff and the one thing it proves,
-    // that the segment was reused, was thrown away as boilerplate.
+    // Model output must not count toward document frequency: sixty copies would pass the cutoff.
     for index in 1...60 {
       judge.add(
         segment: JudgedSegment(

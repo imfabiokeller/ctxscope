@@ -3,9 +3,6 @@ import Testing
 
 @testable import ScopeConnect
 
-/// A plan carries the bytes it was worked out from, and the file is read again
-/// before anything is written. The panel can sit open while Claude Code writes
-/// an allow rule into the same file.
 @Suite("a plan that has gone stale")
 struct StalePlanTests {
   static let home = ClaudeHome(root: URL(fileURLWithPath: "/nowhere/.claude"))
@@ -22,7 +19,6 @@ struct StalePlanTests {
     let connect = service(files)
     let plan = try connect.plan(.connect(port: Self.port))
 
-    // Claude Code writes an allow rule while the panel sits open.
     let moved = Data("{\n  \"model\": \"opus\",\n  \"permissions\": {}\n}\n".utf8)
     try files.write(moved, to: Self.home.settings)
 
@@ -30,7 +26,6 @@ struct StalePlanTests {
     #expect(try files.data(at: Self.home.settings) == moved)
     #expect(try files.data(at: Self.home.backup) == nil)
 
-    // Worked out again, it writes, and the change that arrived survives.
     let again = try connect.plan(.connect(port: Self.port))
     try connect.apply(again)
     let after = try #require(try files.data(at: Self.home.settings))
@@ -49,8 +44,7 @@ struct StalePlanTests {
     try files.write(moved, to: Self.home.settings)
 
     #expect(throws: Refusal.moved) { try connect.apply(plan) }
-    // A backup written before the check would hold the older file, and undo
-    // would trust it.
+    // A backup written before the check would hold the older file, and undo would trust it.
     #expect(try files.data(at: Self.home.backup) == nil)
 
     try connect.apply(try connect.plan(.connect(port: Self.port)))

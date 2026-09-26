@@ -5,7 +5,6 @@ import Testing
 @testable import ScopeCapture
 @testable import ScopeUI
 
-/// What the Context page says, checked without drawing it.
 @Suite("Context presenter")
 @MainActor
 struct ContextPresenterTests {
@@ -17,7 +16,6 @@ struct ContextPresenterTests {
     return LaneAnalysis(session: recording.sessionID, lane: lane, references: judge.report())
   }
 
-  /// A sanitized fixture read the way the app reads a transcript.
   static func fixture(_ name: String) throws -> LaneAnalysis {
     let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
       .deletingLastPathComponent().appending(path: "ScopeCaptureTests/Fixtures/\(name).jsonl")
@@ -110,7 +108,6 @@ struct ContextPresenterTests {
     let facts = Dictionary(uniqueKeysWithValues: inspector.facts.map { ($0.term, $0.value) })
     #expect(facts["Came from"]?.hasPrefix("MCP server 2d2179e129e4, connected in request ") == true)
     #expect(facts["Used"] == "Not tracked")
-    // The whole group is outlined on the strip, whichever member was picked.
     #expect(
       page.strip.selected?.count
         == server.members.compactMap { analysis.segment($0)?.tokens.value }.reduce(0, +))
@@ -138,7 +135,6 @@ struct ContextPresenterTests {
     #expect(facts["Used"]?.detail == "no later text reuses it")
     #expect(facts["Added in"]?.value == "Request \(segment.born + 1)")
     #expect(facts["Cost so far"]?.detail?.hasSuffix(" per request") == true)
-    // Two facts that are sentences take the whole row.
     #expect(inspector.facts.filter(\.isWide).map(\.term) == ["Used", "Came from"])
     #expect(page.strip.selected?.count == segment.tokens.value)
     #expect(ContextPresenter.page(analysis, figures).inspector == nil)
@@ -178,8 +174,6 @@ struct ContextPresenterTests {
     #expect(MagnifierWords.window(3..<12, of: 1284) == "blocks 4–12 of 1,284")
   }
 
-  /// The strip's magnifier is headed the way the timeline's is: the request
-  /// at the playhead, counted from one, and its size and cost.
   @Test("the strip's magnifier names its request the way the timeline's does")
   func magnifierHeading() {
     let analysis = Self.analysis()

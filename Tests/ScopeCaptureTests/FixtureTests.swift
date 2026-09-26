@@ -4,11 +4,6 @@ import Testing
 
 @testable import ScopeCapture
 
-/// The numbers each fixture produces, pinned.
-///
-/// A golden fixture only earns its name if it fails when the answer changes.
-/// Checking that a count is above zero does not do that, so these are the real
-/// numbers, and any change to them has to be a change somebody meant.
 @Suite("Fixtures")
 struct FixtureTests {
   struct Pinned {
@@ -28,23 +23,13 @@ struct FixtureTests {
 
   static let pinned: [Pinned] = [
     Pinned(
-      // Eighty-four more segments than before the transcript's own record of
-      // the prefix was used: thirteen system prompt blocks, one per memory
-      // file, one per tool of the snapshot's list and one per tool a search
-      // loaded later, all with their own text, where there used to be four
-      // numbers from a prior.
       name: "short-session", requests: 16, segments: 173, prefixTokens: 48_020,
       peak: 106_999, window: 200_000, toolCalls: 22, busts: 1, compactions: 0,
       inferredRetirements: 0, flooredSegments: 0,
       bands: [.sys, .tools, .mcp, .mem, .user, .asst, .think, .call, .read, .srch]),
     Pinned(
-      // Four more segments than before the retirement fix: the room a
-      // retirement frees beyond what is needed is now an Unattributed segment
-      // instead of being added to whatever entered at that request.
       name: "compaction-session", requests: 23, segments: 128, prefixTokens: 967_347,
       peak: 994_421, window: 1_000_000, toolCalls: 17, busts: 1, compactions: 1,
-      // Nine fewer inferred retirements than before framing segments died with
-      // their chain: those nine were framing being swept at the compaction.
       inferredRetirements: 4, flooredSegments: 0,
       bands: [.sys, .tools, .mcp, .mem, .user, .asst, .think, .call, .bash, .agent]),
     Pinned(
@@ -53,9 +38,7 @@ struct FixtureTests {
       inferredRetirements: 0, flooredSegments: 0,
       bands: [.sys, .tools, .mcp, .mem, .user, .asst, .think, .call, .read, .bash]),
     Pinned(
-      // A peak of 498,847 used to report a 500,000 window, which no session
-      // on this machine ever ran. The smallest window anyone has evidence for
-      // that holds it is 1M.
+      // No session on this machine ran a 500k window; 1M is the smallest with evidence.
       name: "parallel-calls", requests: 11, segments: 99, prefixTokens: 460_098,
       peak: 498_847, window: 1_000_000, toolCalls: 21, busts: 0, compactions: 0,
       inferredRetirements: 0, flooredSegments: 0,
@@ -92,10 +75,8 @@ struct FixtureTests {
     #expect(event.trigger == "auto")
     #expect(event.preTokens == 999_274)
     #expect(event.postTokens == 18_020)
-    // The request at the boundary is the small one, not the large one before.
     #expect(lane.snapshots[event.atRequest].usage.promptTotal < event.preTokens / 2)
     #expect(lane.snapshots[event.atRequest - 1].usage.promptTotal > event.preTokens / 2)
-    // The bust at that request is attributed to the compaction.
     let bust = CacheAnalyzer.run(lane).busts.first { $0.request == event.atRequest }
     #expect(bust?.cause == .compaction)
   }
@@ -114,13 +95,9 @@ struct FixtureTests {
   @Test("an output total that cannot be right is refused rather than believed")
   func implausibleTotalsAreRefused() throws {
     let lane = try AdapterTests.lane("subagent-lane").lane
-    // This fixture comes from a lane whose transcript reports single digit
-    // output totals for responses carrying hundreds of characters. Every one
-    // of them is a response with no stop reason, so the totals are refused
-    // before the sizer's own plausibility test ever has to fire.
+    // The fixture's single digit output totals all belong to responses with no stop reason.
     #expect(lane.stats.unfinishedResponses > 0)
     #expect(lane.stats.rejectedMeasurements == 0)
-    // And with them refused, no real block ends up pinned at the floor.
     #expect(lane.segments.allSatisfy { $0.characters == 0 || $0.tokens.value > Segment.floor })
     #expect(Validator.run(lane).passed)
   }

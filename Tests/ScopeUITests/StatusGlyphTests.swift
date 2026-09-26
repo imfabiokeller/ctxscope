@@ -4,8 +4,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// The mark in the menu bar: three bars rising left to right, filled with a
-/// session in focus and outlined with none.
 @Suite("the menu bar mark")
 struct StatusGlyphTests {
   @Test("three bars, three points wide, rising, inside a 14 by 12 box")
@@ -15,7 +13,6 @@ struct StatusGlyphTests {
     #expect(bars.count == 3)
     #expect(bars.allSatisfy { $0.width == 3 })
     #expect(bars.map(\.height) == [4.5, 7.5, 11])
-    // They stand on one base, and every one fits the box with its outline.
     #expect(Set(bars.map(\.maxY)).count == 1)
     let box = CGRect(origin: .zero, size: StatusGlyph.size)
     for bar in bars {
@@ -38,7 +35,6 @@ struct StatusGlyphTests {
   }
 }
 
-/// What the item shows for each state of the session in focus.
 @Suite("the menu bar's face")
 struct StatusFaceTests {
   @Test("a live session is the filled mark and its size")
@@ -61,8 +57,6 @@ struct StatusFaceTests {
   }
 }
 
-/// What the menu bar shows of the session in focus, and what it shows when
-/// there is none.
 @Suite("what the menu bar reads")
 @MainActor
 struct StatusReadingTests {

@@ -3,11 +3,9 @@ import Testing
 
 @testable import ctxscope
 
-/// Where the popover's panel hangs. It has no arrow, so nothing but its
-/// place says which item it belongs to.
 @Suite("where the panel goes")
 struct PanelPlacementTests {
-  /// A 1440 point wide screen whose bar is 24 points tall.
+  /// 1440 points wide, with a 24 point menu bar.
   private let screen = CGRect(x: 0, y: 0, width: 1440, height: 876)
   private let reach = PanelPlacement.Margins(top: 20, side: 32, bottom: 44)
   private let size = CGSize(width: 362, height: 450)
@@ -31,7 +29,6 @@ struct PanelPlacementTests {
   func edges() {
     #expect(place(itemX: 1400).panel.maxX == screen.maxX - 8)
     #expect(place(itemX: 0).panel.minX == screen.minX + 8)
-    // On a second screen to the left of the first, in its own coordinates.
     let left = CGRect(x: -1280, y: 0, width: 1280, height: 776)
     #expect(place(itemX: -40, on: left).panel.maxX == left.maxX - 8)
   }

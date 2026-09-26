@@ -3,8 +3,6 @@ import Testing
 
 @testable import ScopeConnect
 
-/// Two settings stop hooks running whatever is written under `hooks`.
-/// ctxscope neither writes nor removes them, so all it can do is say so.
 @Suite("settings that stop the hooks")
 struct BlockedHooksTests {
   private func blocker(_ text: String, port: UInt16? = 45871) -> String? {
@@ -39,7 +37,6 @@ struct BlockedHooksTests {
     #expect(blocker("{\"allowedHttpHookUrls\": [\"http://127.0.0.1:45871/ctxscope/hook\"]}") == nil)
     #expect(blocker("{\"allowedHttpHookUrls\": [\"http://127.0.0.1:45871/*\"]}") == nil)
     #expect(blocker("{\"allowedHttpHookUrls\": [\"*\"]}") == nil)
-    // The port it checks is the one written in the file.
     #expect(
       blocker(
         "{\"allowedHttpHookUrls\": [\"http://127.0.0.1:45999/ctxscope/hook\"]}",

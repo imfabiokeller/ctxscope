@@ -21,8 +21,6 @@ struct BandRegistryTests {
     #expect(BandRegistry.bands(in: .prefix) == [.sys, .tools, .mcp, .mem])
   }
 
-  /// F3: what nothing accounts for is not part of the prefix, is not the
-  /// harness's doing, and is nobody's hue.
   @Test("unattributed content stands outside the prefix and outside the harness")
   func unattributed() {
     #expect(BandRegistry.family(of: .unattr) == .unattributed)

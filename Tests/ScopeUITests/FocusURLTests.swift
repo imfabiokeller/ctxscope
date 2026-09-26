@@ -6,14 +6,9 @@ import Testing
 
 @testable import ScopeUI
 
-/// A feed the machine can gain a session on between two scans, which is what
-/// `/ctxscope` in a brand-new project directory looks like.
 private final class ArrivingFeed: SessionFeed, @unchecked Sendable {
   let recording: Recording
-  /// Set before the scan that is meant to find it.
   var extra: String?
-  /// How long a scan takes. A scan of this machine is most of a second, which
-  /// is long enough for somebody to pick a session while it runs.
   var seconds: Double = 0
 
   init(recording: Recording) {
@@ -39,9 +34,6 @@ private final class ArrivingFeed: SessionFeed, @unchecked Sendable {
   }
 }
 
-/// A `show` URL naming an id this machine does not have used to take the focus
-/// away: the window went on showing the old session, hook events from it were
-/// dropped, and the next scan wiped the focus for good.
 @Suite("a show URL that names an unknown id")
 @MainActor
 struct FocusURLTests {
@@ -60,8 +52,7 @@ struct FocusURLTests {
 
   @Test("an id that is not an id at all is a failed substitution")
   func typoInTheURL() throws {
-    // The placeholder itself, which is what a shell that did not substitute
-    // passes, and anything else with a character an id cannot hold.
+    // The literal placeholder is what a shell that did not substitute passes.
     #expect(
       ScopeURL.parse(URL(string: "ctxscope://show?session=%24%7BCLAUDE_SESSION_ID%7D")!)
         == .show(session: nil))
@@ -69,7 +60,6 @@ struct FocusURLTests {
     #expect(try show("ctxscope://show?session=a/b") == .show(session: nil))
     #expect(try show("ctxscope://show?session=") == .show(session: nil))
     #expect(try show("ctxscope://show?session=older") == .show(session: "older"))
-    // Both halves of the rule are the same rule.
     #expect(ScopeURL.show(session: "a b") == "ctxscope://show")
     #expect(ScopeURL.valid("a b") == nil)
     #expect(ScopeURL.valid(String(repeating: "a", count: 200)) == nil)
@@ -84,7 +74,6 @@ struct FocusURLTests {
     await model.settle()
     #expect(model.list.focused == "newer")
     #expect(model.recording?.sessionID == "newer")
-    // And the focused session's events still arrive.
     model.liveness.saw(activity: Date())
     model.apply(HookEvent(kind: .sessionEnd, sessionID: "newer"))
     await model.settle()
@@ -98,7 +87,6 @@ struct FocusURLTests {
     await model.settle()
     #expect(model.list.focused == "newer")
 
-    // The scan that comes with the next write says the same thing.
     model.reloadSessions()
     await model.settle()
     #expect(model.list.focused == "newer")
@@ -115,9 +103,6 @@ struct FocusURLTests {
     #expect(model.recording?.sessionID == "brand-new")
   }
 
-  /// The scan that looks for an unknown id takes as long as a scan takes. A
-  /// session picked while it runs is the newer answer, and the scan landing
-  /// afterwards used to overwrite it.
   @Test("a session picked while a scan runs is the one that stays")
   func aChoiceBeatsAPendingScan() async throws {
     let (model, feed) = await model()
@@ -125,7 +110,6 @@ struct FocusURLTests {
     feed.seconds = 0.3
 
     model.open(try show("ctxscope://show?session=brand-new"))
-    // The menu, or another /ctxscope, while that scan is still running.
     model.focus(session: "older")
     #expect(model.list.focused == "older")
 
@@ -133,7 +117,6 @@ struct FocusURLTests {
     #expect(model.list.focused == "older", "a scan that landed late moved the focus")
     #expect(model.recording?.sessionID == "older")
 
-    // And the id it was looking for is not still waiting to be found.
     model.reloadSessions()
     await model.settle()
     #expect(model.list.focused == "older")

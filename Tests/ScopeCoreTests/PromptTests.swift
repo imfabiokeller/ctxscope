@@ -21,7 +21,6 @@ struct PromptTests {
       #expect(earlier.requests.upperBound + 1 == later.requests.lowerBound)
       #expect(earlier.endTokens == later.startTokens)
     }
-    // The first request came before anybody typed anything in this lane.
     #expect(analysis.prompt(containing: 0) == nil)
     for request in 1..<lane.snapshots.count {
       #expect(analysis.prompt(containing: request)?.requests.contains(request) == true)

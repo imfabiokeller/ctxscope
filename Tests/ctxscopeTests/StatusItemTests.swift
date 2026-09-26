@@ -5,7 +5,6 @@ import Testing
 
 @testable import ctxscope
 
-/// A bar to draw on that is not a bar.
 @MainActor
 private final class FakeButton: StatusButton {
   var barScreen: NSScreen? { nil }
@@ -29,7 +28,6 @@ private final class FakeButton: StatusButton {
   }
 }
 
-/// What the item draws, and when it bothers.
 @Suite("what the item draws", .serialized)
 @MainActor
 struct StatusItemTests {
@@ -54,9 +52,6 @@ struct StatusItemTests {
     #expect(button.draws == 1)
   }
 
-  /// The one piece of motion. It is worth checking that it happens when the
-  /// session changes and at no other time, because a fade per frame is what
-  /// the idle budget forbids.
   @Test("the session going quiet fades, and the first picture does not")
   func crossFades() async throws {
     let (controller, model) = try await controller(live: true)
@@ -70,7 +65,6 @@ struct StatusItemTests {
     #expect(button.draws == 2)
     #expect(button.fades == 1)
 
-    // And nothing changing changes nothing.
     controller.refresh(on: button)
     #expect(button.fades == 1)
   }

@@ -3,9 +3,6 @@ import ScopeCore
 
 @testable import ScopeUI
 
-/// Small lanes made by hand for the Timeline presenter's tests: a prefix, a
-/// prompt, and one block per request, with the cache read back in full at
-/// every request unless a break says how much was read.
 enum TimelineLanes {
   struct Block {
     let band: Band
@@ -15,8 +12,8 @@ enum TimelineLanes {
     var died: Int?
   }
 
-  /// `reads` is what a request read from the cache when it is not all of the
-  /// request before it; `gaps` the seconds before a request, 10 otherwise.
+  /// `reads` overrides what a request read from the cache (by default all of the request
+  /// before it); `gaps` the seconds before a request, 10 otherwise.
   static func lane(
     requests: Int, extra: [Block] = [], prompts: [Int] = [0], reads: [Int: Int] = [:],
     gaps: [Int: Double] = [:], models: [Int: String] = [:]
@@ -58,7 +55,6 @@ enum TimelineLanes {
       prompts: segments.filter { $0.band == .user }.map(\.id))
   }
 
-  /// The page for a lane, with every prompt's line its block's label.
   static func present(_ lane: Lane, selected: Int? = nil) -> TimelineData {
     let costs = CostAnalyzer.run(lane)
     let cache = CacheAnalyzer.run(lane)

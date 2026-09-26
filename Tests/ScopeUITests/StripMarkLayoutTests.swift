@@ -3,8 +3,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// The marks' labels above the strip never overlap each other, and no mark's
-/// upright runs through a label.
 @Suite("strip mark layout")
 struct StripMarkLayoutTests {
   static func place(
@@ -46,8 +44,6 @@ struct StripMarkLayoutTests {
     let cache = try #require(layout.cacheLabel)
     #expect(abs(cache - (6 + 170 + 12)) < 0.001)
     #expect(Self.apart(layout))
-    // The bracket's label runs across the cache line, so the line starts
-    // under it.
     #expect(layout.crossesCacheLine)
   }
 

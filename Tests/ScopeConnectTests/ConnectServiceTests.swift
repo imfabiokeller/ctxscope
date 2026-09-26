@@ -20,7 +20,6 @@ struct ConnectServiceTests {
     #expect(!plan.isEmpty)
     #expect(plan.skill == .install)
     #expect(plan.diff().contains("+   \"hooks\": {"))
-    // Nothing has been written while there is only a plan.
     #expect(files.paths.isEmpty)
 
     try connect.apply(plan)
@@ -29,7 +28,6 @@ struct ConnectServiceTests {
     #expect(status.port == Self.port)
     #expect(status.hasSkill)
     #expect(!status.isPartial)
-    // There was no file to copy, so there is no backup pretending there was.
     #expect(try files.data(at: Self.home.backup) == nil)
     #expect(try files.data(at: Self.home.skill) == ConnectSkill.data)
   }
@@ -99,8 +97,6 @@ struct ConnectServiceTests {
     try connect.apply(try connect.plan(.connect(port: Self.port)))
     let written = try files.data(at: Self.home.settings)
 
-    // Everything is in place, so there is nothing to write, whether or not
-    // the panel is opened again.
     for _ in 0..<3 {
       let plan = try connect.plan(.connect(port: Self.port))
       #expect(plan.isEmpty)
@@ -110,7 +106,6 @@ struct ConnectServiceTests {
       #expect(try files.data(at: Self.home.settings) == written)
     }
 
-    // The only later writes: a port that truly cannot be used, and undo.
     let moved = try connect.plan(.connect(port: 45999))
     #expect(!moved.isEmpty)
     #expect(!(try connect.plan(.disconnect)).isEmpty)
@@ -160,7 +155,6 @@ struct ConnectServiceTests {
   func needsReconnect() throws {
     let files = MemoryFiles()
     let connect = service(files)
-    // Nothing written: nothing to reconnect.
     #expect(try connect.status().needsReconnect(listening: Self.port) == false)
 
     try connect.apply(try connect.plan(.connect(port: Self.port)))
@@ -168,12 +162,9 @@ struct ConnectServiceTests {
     #expect(try connect.status().needsReconnect(listening: 45999))
     #expect(try connect.status().needsReconnect(listening: nil))
 
-    // Connecting again on the new port settles it.
     try connect.apply(try connect.plan(.connect(port: 45999)))
     #expect(try connect.status().needsReconnect(listening: 45999) == false)
 
-    // And a wake command an older ctxscope wrote is a reconnect too: it reads
-    // as connected while it would turn an off ctxscope on.
     let current = try #require(try files.data(at: Self.home.settings))
     let old = String(decoding: current, as: UTF8.self)
       .replacingOccurrences(of: HookWiring.wakeCommand, with: "open -g ctxscope://wake || true")
@@ -204,16 +195,12 @@ struct ConnectServiceTests {
     #expect(lines.first == "---")
     #expect(lines.contains("name: ctxscope"))
     #expect(lines.contains { $0.hasPrefix("description: ") })
-    // Without this the injected command aborts the invocation outside auto
-    // mode, which is what the skills reference says an ask rule does. The
-    // space form and the `:*` suffix are equivalent; this is the one the
-    // permission dialog writes.
+    // Without it the injected command aborts outside auto mode. `Bash(open *)` equals the `:*`
+    // form; it is the one the permission dialog writes.
     #expect(lines.contains("allowed-tools: Bash(open *)"))
     #expect(lines.contains("disable-model-invocation: true"))
-    // The rule has to cover the command the body runs.
     #expect(ConnectSkill.text.contains("!`open \""))
     #expect(ConnectSkill.text.contains("ctxscope://show?session=${CLAUDE_SESSION_ID}"))
-    // The URL is built in one place, not written out twice.
     #expect(
       ConnectSkill.text.contains(ScopeURL.show(session: ScopeURL.sessionPlaceholder)))
     #expect(Self.home.skill.path.hasSuffix("/skills/ctxscope/SKILL.md"))
@@ -242,9 +229,6 @@ struct ConnectServiceTests {
   }
 }
 
-/// `doctor` is the one command pointed at the real files, and the one line
-/// that can save a confusing hour is which copy of ctxscope a wake would
-/// start.
 @Suite("what doctor says about the scheme")
 struct SchemeLineTests {
   private func report(handler: URL?, copies: [URL], running: URL?) -> ConnectReport {

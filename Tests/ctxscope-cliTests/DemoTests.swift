@@ -5,13 +5,10 @@ import Testing
 
 @testable import ctxscope_cli
 
-/// The demo session, written into a temporary home and read back through the
-/// adapter: it has to tell the story it was written to tell.
 @Suite("demo session")
 struct DemoTests {
   static let start = Date(timeIntervalSince1970: 1_790_000_000)
 
-  /// A home with the demo written into it, and what the adapter makes of it.
   static func written(live: Bool = false) throws -> (home: URL, session: DemoSession) {
     let home = FileManager.default.temporaryDirectory
       .appending(path: "ctxscope-demo-\(UUID().uuidString)")
@@ -49,7 +46,6 @@ struct DemoTests {
     #expect(captured.recording.lanes.count == 3)
     #expect(
       Set(captured.recording.lanes.compactMap(\.agentType)) == ["Explore", "general-purpose"])
-    // Every lane adds up, which is what makes its numbers believable.
     for lane in captured.recording.lanes {
       #expect(Validator.run(lane).mismatches.isEmpty)
     }

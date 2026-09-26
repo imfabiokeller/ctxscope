@@ -4,14 +4,9 @@ import Testing
 
 @testable import ScopeCapture
 
-/// The harness's own `/context` report, and what a lane does with it.
-///
-/// The numbers here are invented. What is taken from a real report is its
-/// shape, which is `docs/TRANSCRIPT_FORMAT.md` section 12.
+/// The numbers are invented; the shape is `docs/TRANSCRIPT_FORMAT.md` section 12.
 @Suite("the context report")
 struct ContextReportTests {
-  /// A report entry of the shape Claude Code writes, with whatever MCP rows
-  /// the caller wants in it.
   static func entry(
     used: [(String, Int)] = [
       ("System prompt", 5000), ("System tools", 15000), ("MCP tools", 15000),
@@ -67,8 +62,6 @@ struct ContextReportTests {
     #expect(report.memoryFiles == 1600)
     #expect(report.skills == 9600)
     #expect(report.messages == 493_000)
-    // The deferred schemas and the free space are not in the prompt, so they
-    // are not in the prefix either.
     #expect(report.prefixTokens == 36_600)
   }
 
@@ -106,8 +99,6 @@ struct ContextReportTests {
     let joined = ContextUsage.joined(report, tools: request)
     #expect(joined.tools.count == 3)
     #expect(joined.tools.filter(\.isMCP).compactMap(\.tokens).reduce(0, +) == 15_000)
-    // The row that no snapshot names is a deferred tool and never becomes a
-    // block: it is not in the context.
     #expect(!joined.tools.contains { $0.name == "deferred" })
   }
 
@@ -124,14 +115,11 @@ struct ContextReportTests {
         ContextReport.Tool(name: "mcp__a__two", server: "srv-1", tokens: nil, characters: 0),
       ])
     let parts = PrefixSplit.plan(from: joined, observed: [.sys]).parts
-    // SYS is observed, so nothing is split for it.
     #expect(!parts.contains { $0.band == .sys })
     #expect(parts.filter { $0.band == .tools }.map(\.label) == ["Read", "Bash"])
     #expect(
       parts.filter { $0.band == .mcp }.map(\.label)
         == ["mcp__a__one (srv-1)", "mcp__a__two (srv-1)"])
-    // A built-in tool's share of its category is the length of its schema, an
-    // MCP tool's is what the report said it costs.
     let tools = parts.filter { $0.band == .tools }.compactMap(\.reportedTokens)
     #expect(tools[0] == 3 * tools[1])
     let mcp = parts.filter { $0.band == .mcp }.compactMap(\.reportedTokens)
@@ -144,15 +132,12 @@ struct ContextReportTests {
     let report = try #require(try Self.read(Self.entry()))
     let plan = PrefixSplit.plan(from: report)
     #expect(plan.parts.map(\.band) == [.sys, .tools, .mcp, .mem])
-    // The categories are token counts, not shares, so every part is sized and
-    // the rest of the derived total is nobody's.
     #expect(plan.parts.allSatisfy { !$0.isShare })
     #expect(plan.parts.compactMap(\.reportedTokens).reduce(0, +) == report.prefixTokens)
   }
 
-  /// A fixture with a report appended to the end of it, which is also the case
-  /// that matters: a report is typed hundreds of requests after the prefix it
-  /// describes was derived, so it has to be found before the file is read.
+  /// The report is appended at the end, as in real sessions: it must be found before the file
+  /// is read.
   static func laneWithReport(_ report: [String: Any]) throws -> Lane {
     let (url, _) = try IncrementalTests.split("short-session", at: 1.0)
     defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
@@ -164,8 +149,6 @@ struct ContextReportTests {
     return capture.finish().recording.lanes[0]
   }
 
-  /// The tools of the fixture's own snapshot, so a report names the tools
-  /// that session really had.
   static func fixtureTools() throws -> [ContextReport.Tool] {
     var evidence = PrefixEvidence()
     for entry in try AdapterTests.fixture("short-session") { evidence.learn(from: entry) }
@@ -183,16 +166,11 @@ struct ContextReportTests {
     let mcp = lane.segments.filter { $0.band == .mcp }
     #expect(mcp.count == tools.count)
     #expect(mcp.map(\.label) == tools.map(\.label))
-    // The tools are sized in the proportions the report gave them.
     let first = try #require(mcp.first?.tokens.value)
     let last = try #require(mcp.last?.tokens.value)
     #expect(last > first)
-    // The harness counted the categories, so what the derived total has
-    // beyond them is nobody's and says so.
     #expect(lane.segments.contains { $0.band == .unattr && $0.born == 0 })
-    // The one thing that must never move. The report here is invented for a
-    // session ten times this one's size, so the check that holds the bands
-    // against it is expected to say so and is not what this test is about.
+    // The invented report fits a session ten times this size, so only the totals check matters.
     let checks = Validator.run(lane)
     #expect(checks.mismatches.isEmpty)
     #expect(checks.checks.first { $0.name == "totals equal API usage" }?.passed == true)
@@ -200,12 +178,10 @@ struct ContextReportTests {
 
   @Test("a report that does not parse leaves the prefix as it was")
   func malformedReportFallsBack() throws {
-    // A version that renamed its categories, which is what drift looks like.
+    // Renamed categories, as a changed harness version would write them.
     let lane = try Self.laneWithReport(
       Self.entry(used: [("bravo charlie", 5000), ("delta echo", 15_000)], deferred: []))
     #expect(lane.prefixSource == .snapshot)
-    // The prior still says how large MCP is, and the snapshot still says what
-    // is in it, so the blocks are the tools either way.
     let tools = try Self.fixtureTools()
     #expect(
       lane.segments.count { $0.band == .mcp && $0.born == 0 } == tools.count(where: \.isMCP))

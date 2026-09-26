@@ -2,10 +2,6 @@ import Testing
 
 @testable import ScopeCore
 
-/// An export is read by a person, so its request numbers count from one like
-/// everything else a person reads. `analyze --at 47` printed "request 47"
-/// while the JSON beside it said 46, and a CSV `born` ran 0 to 194 where the
-/// window showed 1 to 195.
 @Suite("export numbering")
 struct ExportNumberingTests {
   static var payload: ExportPayload {
@@ -44,10 +40,8 @@ struct ExportNumberingTests {
     let header = try #require(rows.first).split(separator: ",").map(String.init)
     let born = try #require(header.firstIndex(of: "born"))
     let first = try #require(rows.dropFirst().first).split(separator: ",").map(String.init)
-    // Every block of a lane is born at request 1 or later, never at 0.
     #expect(Int(first[born]) == payload.lane.segments[0].born + 1)
-    // A label can hold a comma and is quoted when it does, which moves the
-    // columns; those rows are skipped rather than mis-parsed here.
+    // A quoted label can hold a comma and shift the columns, so quoted rows are skipped.
     var checked = 0
     for row in rows.dropFirst() where !row.contains("\"") {
       let cells = row.split(separator: ",", omittingEmptySubsequences: false).map(String.init)

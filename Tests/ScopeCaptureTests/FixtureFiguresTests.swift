@@ -4,8 +4,6 @@ import Testing
 
 @testable import ScopeCapture
 
-/// The figures the window shows, worked out from the sanitized fixtures and
-/// pinned, so a change to any of them has to be meant.
 @Suite("Window figures on fixtures")
 struct FixtureFiguresTests {
   private static func analyzed(_ name: String) throws -> (Lane, [SegmentID: ReferenceFinding]) {
@@ -34,8 +32,6 @@ struct FixtureFiguresTests {
     let idle = try #require(CacheAnalyzer.run(short).busts.first)
     #expect(idle.request == 4)
     #expect(idle.cause == .idle)
-    // Over two hours, and the system prompt and tools were still read from
-    // the cache: only the conversation after them was written again.
     #expect(abs(idle.gapSeconds - 8123.12) < 0.01)
     #expect(idle.readThrough == .tools)
     #expect(idle.change == nil)
@@ -53,8 +49,7 @@ struct FixtureFiguresTests {
     let costs = CostAnalyzer.run(lane)
     let cache = CacheAnalyzer.run(lane)
     let tasks = PromptAnalyzer.run(lane, costs: costs, cache: cache).prompts
-    // Six typed prompts, two of which entered at the same request and so
-    // were answered as one.
+    // Two of the six prompts entered at the same request.
     #expect(lane.prompts.count == 6)
     #expect(tasks.count == 5)
     #expect(tasks.first?.requests.lowerBound == 0)

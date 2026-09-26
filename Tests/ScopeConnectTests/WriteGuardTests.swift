@@ -3,8 +3,6 @@ import Testing
 
 @testable import ScopeConnect
 
-/// The check in front of every write. Nothing is asserted after the fact: a
-/// file that would fail is never written.
 @Suite("the write guard")
 struct WriteGuardTests {
   @Test(
@@ -71,8 +69,6 @@ struct WriteGuardTests {
   @Test("a change that could not be taken back is refused")
   func notReversible() throws {
     let original = Data("{\"model\": \"opus\"}".utf8)
-    // A file that does not give the original back: the guard is what catches
-    // it, whatever produced it.
     #expect(throws: Refusal.wouldNotComeBack) {
       try WriteGuard.check(original, backup: nil, becomes: Data("{\"model\": \"haiku\"}".utf8))
     }
@@ -102,7 +98,6 @@ struct WriteGuardTests {
       try WriteGuard.check(readable: Data("{\n  \"hooks\": {},\n  \"hooks\": {}\n}\n".utf8))
       Issue.record("a file with a repeated key was accepted")
     } catch let refusal as Refusal {
-      // Claude Code does read this file, so the old wording was untrue.
       #expect(
         refusal.description
           == "\"hooks\" is written twice in the settings file, so ctxscope cannot tell "

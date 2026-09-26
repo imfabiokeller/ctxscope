@@ -4,10 +4,6 @@ import ScopeCore
 
 @testable import ScopeUI
 
-/// A session that really grows when it is asked to, so the refresh path is
-/// exercised rather than assumed. The recording feed never gains a request,
-/// which is why nothing had ever run `keepingPlayhead`, `isAtLatest` or the
-/// watch against a lane that moved.
 final class GrowingSession: OpenSession, @unchecked Sendable {
   let session: SessionRef
   private(set) var captured: CapturedSession
@@ -37,8 +33,6 @@ final class GrowingSession: OpenSession, @unchecked Sendable {
   func content(of segment: SegmentID, lane: LaneID) -> SegmentContent? { nil }
   func details(of segments: [SegmentID], lane: LaneID) -> [SegmentID: BlockDetail] { [:] }
 
-  /// The same recording with only its first `requests` requests, the way a
-  /// session looks before the rest of it has been written.
   static func cut(_ recording: Recording, to requests: Int, id: String) -> CapturedSession {
     let lanes = recording.lanes.map { lane in
       Lane(
@@ -60,16 +54,13 @@ final class GrowingSession: OpenSession, @unchecked Sendable {
   }
 }
 
-/// A feed of sessions that grow. The references are given, so a test can put a
-/// session at a real path on disk when what the watcher holds is the point.
 struct GrowingFeed: SessionFeed {
   let recording: Recording
   let refs: [SessionRef]
   var startAt = 20
 
-  /// One session, at a path that does not exist: a test about what a model
-  /// does with what it is handed has nothing for the watcher to hold. A real
-  /// path would have the watcher firing and the session growing on its own.
+  /// At a path that does not exist on purpose: a real path would have the watcher firing and
+  /// the session growing on its own.
   init(recording: Recording, startAt: Int = 20) {
     self.recording = recording
     self.startAt = startAt
@@ -81,7 +72,6 @@ struct GrowingFeed: SessionFeed {
     ]
   }
 
-  /// A path under a directory nothing made.
   static func nowhere(_ id: String) -> URL {
     FileManager.default.temporaryDirectory
       .appending(path: "ctxscope-nowhere-\(UUID().uuidString)")
@@ -94,7 +84,6 @@ struct GrowingFeed: SessionFeed {
     self.startAt = startAt
   }
 
-  /// Two sessions, newest first, which is the order a scan reports.
   static func two(recording: Recording, ids: [String] = ["newer", "older"]) -> GrowingFeed {
     GrowingFeed(
       recording: recording,

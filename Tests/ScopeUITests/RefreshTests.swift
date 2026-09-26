@@ -12,14 +12,11 @@ struct RefreshTests {
       feed: GrowingFeed(recording: SyntheticRecording.make(), startAt: startAt))
     model.reloadSessions()
     await model.settle()
-    // One session is focused, which is the only way anything is shown.
     model.focus(session: model.list.entries.first?.id)
     await model.settle()
     return model
   }
 
-  /// M2: a refresh that gained requests is a write that just happened, which
-  /// is what lights the menu bar on the first request of a turn.
   @Test("a lane that grows marks the session live")
   func growthIsLiveness() async throws {
     let model = await model()
@@ -29,7 +26,6 @@ struct RefreshTests {
     await model.settle()
     #expect(model.liveness.isLive)
     #expect(StatusReading.make(from: model)?.isLive == true)
-    // A refresh that gained nothing says nothing about liveness.
     model.liveness.clear()
     model.refresh()
     await model.settle()
@@ -73,14 +69,11 @@ struct RefreshTests {
     #expect(model.analysis?.requestCount == 25)
   }
 
-  /// The last burst of a turn lands while the previous read is still running.
-  /// Dropping it left the fill stale until the next prompt.
   @Test("a burst that arrives during a read is read afterwards, not dropped")
   func refreshDuringRefresh() async throws {
     let model = await model()
     #expect(model.analysis?.requestCount == 20)
     model.refresh()
-    // Arrives while the first one is in flight.
     model.refresh()
     await model.settle()
     #expect(model.analysis?.requestCount == 30)
@@ -96,9 +89,6 @@ struct RefreshTests {
     #expect(model.analysis?.requestCount == before)
   }
 
-  /// Closing the window inside the seconds a large session takes to open left
-  /// the model loading forever: the cancelled task never cleared its handle,
-  /// so nothing would load again and refresh was refused.
   @Test("stopping during a load leaves nothing behind, and starting again works")
   func stopDuringLoad() async throws {
     let model = InstrumentModel(
@@ -114,7 +104,6 @@ struct RefreshTests {
     #expect(model.analysis != nil)
     #expect(model.recording != nil)
 
-    // And the focused session is still read afterwards.
     model.refresh()
     await model.settle()
     #expect(model.analysis?.requestCount == 25)
@@ -131,8 +120,7 @@ struct RefreshTests {
     #expect(!model.isLoading)
   }
 
-  /// Segment ids are slot numbers, so the id of one session's selection
-  /// usually exists in another and points at something else.
+  /// Segment ids are slot numbers, so one session's selected id usually exists in another.
   @Test("switching session drops the selection and its text")
   func sessionSwitch() async throws {
     let first = SyntheticRecording.make()

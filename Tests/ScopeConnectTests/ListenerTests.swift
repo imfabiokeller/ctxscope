@@ -78,8 +78,7 @@ struct HTTPWireTests {
     }
     #expect(HookRouter.status(for: fromAPage, port: Self.port) == .forbidden)
 
-    // A page cannot set Host either, so a host ctxscope never published is
-    // refused the same way.
+    // A browser page cannot set Host, so an unpublished host is refused the same way.
     for host in ["example.com", "127.0.0.1:1", "127.0.0.1", "evil.local:45871", ""] {
       guard case .request(let elsewhere) = HTTPWire.read(post("{}", host: host)) else {
         Issue.record("a complete request was not read")
@@ -131,16 +130,12 @@ struct HookEventTests {
 
   @Test("fields ctxscope does not use are read past")
   func extras() {
-    // Everything else the harness sends is ignored, so a transcript's text
-    // never enters ctxscope through a hook.
+    // Every other field is ignored, so transcript text never enters through a hook.
     let end = HookEvent.decode(
       Data(#"{"session_id":"s","hook_event_name":"SessionEnd","reason":"clear"}"#.utf8))
     #expect(end == HookEvent(kind: .sessionEnd, sessionID: "s"))
   }
 
-  /// The five events ctxscope used to ask for say nothing the file watcher
-  /// does not say on its own. A settings file that still carries them posts
-  /// them, and they are answered and dropped.
   @Test("an event ctxscope does not listen for is not one")
   func unknown() {
     for name in ["PreToolUse", "UserPromptSubmit", "Stop", "SubagentStart", "PostModelSwitch"] {
@@ -183,19 +178,15 @@ struct HookListenerTests {
     let (data, response) = try await post(body, to: port, path: HookWiring.path)
     #expect((response as? HTTPURLResponse)?.statusCode == 200)
     #expect(String(decoding: data, as: UTF8.self) == "{}")
-    // The answer goes out before the event crosses to the main actor, which is
-    // the point, so the event is waited for rather than assumed.
+    // The answer goes out before the event reaches the main actor, so wait for the event.
     for _ in 0..<200 where seen.events.isEmpty { await Task.yield() }
     #expect(seen.events.map(\.sessionID) == ["abc123"])
 
-    // An event ctxscope does not listen for is still answered, which is what
-    // a settings file written by an older ctxscope keeps posting.
     let other = Data(#"{"session_id":"abc123","hook_event_name":"UserPromptSubmit"}"#.utf8)
     let (_, second) = try await post(other, to: port, path: HookWiring.path)
     #expect((second as? HTTPURLResponse)?.statusCode == 200)
     #expect(seen.events.count == 1)
 
-    // Another path, and a body past the cap.
     let (_, elsewhere) = try await post(body, to: port, path: "/elsewhere")
     #expect((elsewhere as? HTTPURLResponse)?.statusCode == 404)
     let huge = Data(repeating: UInt8(ascii: "x"), count: HTTPWire.bodyCap + 1)
@@ -203,7 +194,6 @@ struct HookListenerTests {
     #expect((refused as? HTTPURLResponse)?.statusCode == 413)
     #expect(seen.events.count == 1)
 
-    // A post a page in a browser could have made is refused.
     let (_, fromAPage) = try await post(
       body, to: port, path: HookWiring.path, origin: "https://example.com")
     #expect((fromAPage as? HTTPURLResponse)?.statusCode == 403)
@@ -238,7 +228,6 @@ struct HookListenerTests {
     }
     defer { listener.stop() }
 
-    // A socket that connects and then says nothing at all.
     let held = NWConnection(
       host: .ipv4(.loopback), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
     let states = AsyncStream<Bool> { yield in
@@ -255,8 +244,6 @@ struct HookListenerTests {
       #expect(ready)
       break
     }
-    // The listener closes it, so a read comes back with nothing rather than
-    // waiting for something that is never sent.
     let closed = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
       held.receive(minimumIncompleteLength: 1, maximumLength: 16) { data, _, isComplete, error in
         continuation.resume(returning: isComplete || error != nil || (data?.isEmpty ?? true))
@@ -287,7 +274,6 @@ struct HookListenerTests {
   }
 }
 
-/// Events the listener reported, kept where a main actor test can read them.
 @MainActor
 private final class Collected {
   private(set) var events: [HookEvent] = []

@@ -3,8 +3,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// The one piece of motion in the bar, and the rules it lives under: nothing
-/// while nothing happens, nothing under Reduce Motion, nothing repeating.
 @Suite("when the item fades")
 struct StatusMotionTests {
   private func face(tokens: Int = 142_600, isLive: Bool = true) -> StatusFace {
@@ -20,11 +18,8 @@ struct StatusMotionTests {
   @Test("a new size, the session going quiet and focus changing all fade")
   func changes() {
     let before = face()
-    // A request landed: the number moved.
     #expect(fades(from: before, to: face(tokens: 151_000)))
-    // The session went quiet, which dims the mark and drops the number.
     #expect(fades(from: before, to: face(isLive: false)))
-    // The session left focus, which is the outline.
     #expect(fades(from: before, to: StatusFace(reading: nil)))
   }
 

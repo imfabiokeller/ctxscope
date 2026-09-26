@@ -4,8 +4,6 @@ import Testing
 
 @testable import ScopeCapture
 
-/// Where a task starts: a prompt the person typed, and nothing else the user
-/// role carries.
 @Suite("typed prompts")
 struct TypedPromptTests {
   private static func user(
@@ -21,7 +19,6 @@ struct TypedPromptTests {
     return TranscriptEntry(try JSONValue(parsing: data))
   }
 
-  /// Feeds entries in file order and says which were taken as new prompts.
   private static func typed(_ entries: [TranscriptEntry]) -> [Bool] {
     var reader = EntryReader()
     return entries.map { entry in
@@ -71,13 +68,10 @@ struct TypedPromptTests {
       promptID: "p1")
     reader.learn(from: entry)
     #expect(reader.pieces(of: entry).map(\.isPrompt) == [true, false])
-    // Read back later, the same entry names the same block.
     #expect(reader.pieces(of: entry).map(\.isPrompt) == [true, false])
   }
 
-  /// The user turns of compaction-session all come from background tasks, and
-  /// its one lane therefore has no prompt at all. The subagent's one prompt is
-  /// the task its parent gave it.
+  /// Every user turn of compaction-session comes from a background task.
   @Test(
     "each fixture lane lists its prompts in the order they entered",
     arguments: [

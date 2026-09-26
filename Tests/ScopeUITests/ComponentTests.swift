@@ -11,8 +11,6 @@ struct ComponentTests {
     #expect(UIFormat.count(1284) == "1,284")
   }
 
-  /// A glyph is written in its icon box and has to stay inside the frame it
-  /// is given, at any size.
   @Test("every glyph stays inside its frame")
   func glyphs() {
     let kinds: [Glyph.Kind] = [.chevronDown, .chevronLeft, .chevronRight, .magnifier, .ellipsis]
@@ -32,8 +30,6 @@ struct ComponentTests {
     #expect(names == ["system", "tools", "memory", "you", "agent", "results"])
   }
 
-  /// Narrow tiles go two to a row in their order, a wide one takes a row of
-  /// its own, and a narrow one left over keeps its half.
   @Test("the fact grid's rows")
   func factRows() {
     typealias Grid = FactGrid<FactData, FactTile>

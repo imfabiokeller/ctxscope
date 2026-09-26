@@ -4,12 +4,8 @@ import Testing
 
 @testable import ScopeCapture
 
-/// Capture is incremental, so a growing file costs only its new lines. These
-/// are the tests that hold it to that.
 @Suite("Incremental capture")
 struct IncrementalTests {
-  /// Splits a fixture into a first part and a tail, writes the first part,
-  /// and returns the file plus the tail.
   static func split(_ name: String, at fraction: Double) throws -> (url: URL, tail: [String]) {
     guard let source = Bundle.module.url(forResource: "Fixtures/\(name)", withExtension: "jsonl")
     else {
@@ -51,7 +47,6 @@ struct IncrementalTests {
     let first = try capture.refresh()
     #expect(first.newLines > 50)
 
-    // Nothing changed, so there is nothing to read.
     let idle = try capture.refresh()
     #expect(idle.newLines == 0)
     #expect(idle.filesRead == 0)
@@ -62,9 +57,6 @@ struct IncrementalTests {
     #expect(second.newLines < first.newLines)
   }
 
-  /// Every fixture, not just the easy one. A compaction restarts the chain and
-  /// parallel calls put results off it, which are exactly the places where
-  /// reading a file in pieces could diverge from reading it at once.
   @Test(
     "reading a file in pieces gives the same lane as reading it at once",
     arguments: ["short-session", "compaction-session", "parallel-calls", "subagent-lane"]
@@ -95,8 +87,7 @@ struct IncrementalTests {
     #expect(streamed.compactions == whole.compactions)
     #expect(streamed.events == whole.events)
     #expect(streamed.window == whole.window)
-    // Every stat but the one about memory, which is a fact about how the file
-    // was read and not about the lane.
+    // Memory stats describe how the file was read, not the lane.
     var stats = streamed.stats
     stats.heldEntries = whole.stats.heldEntries
     #expect(stats == whole.stats)
@@ -127,8 +118,6 @@ struct IncrementalTests {
     #expect(findings(streamed) == findings(whole))
   }
 
-  /// The prompt side of a request is final on its first entry, so the fill at
-  /// the end of a turn must not wait for the next prompt to appear.
   @Test("the newest request is published as soon as it starts")
   func newestRequestIsPublishedImmediately() throws {
     var builder = LaneBuilder(id: .main, agentType: nil, parentToolUseID: nil, window: nil)
@@ -150,8 +139,6 @@ struct IncrementalTests {
     #expect(early.snapshots[0].usage.promptTotal == 100)
     #expect(early.snapshots[0].usage.outputTokens == 7)
 
-    // The rest of the same response arrives. The prompt side does not move,
-    // the output side is taken again.
     builder.append([
       try RequestGroupTests.entry(
         """
@@ -182,7 +169,6 @@ struct IncrementalTests {
     let size = try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int ?? 0
     #expect(lines > 100)
     #expect(end.offset == UInt64(size))
-    // No single line is anywhere near the file, which is the point.
     #expect(biggest < size / 2)
   }
 
@@ -200,7 +186,6 @@ struct IncrementalTests {
     #expect(first.entries.count == 1)
     #expect(first.skipped == 0)
 
-    // The rest of that line arrives, and now it parses.
     try Self.append([#"tant","uuid":"b"}"#], to: url)
     let second = try JSONLReader(url: url).read(from: first.position)
     #expect(second.entries.count == 1)

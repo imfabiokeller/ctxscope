@@ -11,8 +11,6 @@ struct BlockUseTests {
       born: born, contentHash: UInt64(id))
   }
 
-  /// A block reused at request 3, a block never reused, a rule, and a tool
-  /// whose tool is called at request 2.
   private static let lane = Lane(
     id: .main, window: .given(200_000),
     segments: [
@@ -61,7 +59,6 @@ struct BlockUseTests {
     #expect(UseAnalyzer.called(tool, finding: finding, at: 1) == false)
     #expect(UseAnalyzer.called(tool, finding: finding, at: 2) == true)
     #expect(UseAnalyzer.called(Self.lane.segments[2], finding: nil, at: 2) == nil)
-    // A tool block nobody named is a share of the prefix, not one tool.
     #expect(UseAnalyzer.called(tool, finding: nil, at: 2) == nil)
   }
 

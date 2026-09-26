@@ -6,9 +6,6 @@ import Testing
 
 @testable import ctxscope
 
-/// Off is off from the first instruction of a launch. A launch that only
-/// skipped `start()` left the model following, so one hook event from the
-/// focused session read its transcript while ctxscope was turned off.
 @Suite("what a launch does")
 @MainActor
 struct LaunchTests {
@@ -45,15 +42,11 @@ struct LaunchTests {
 
   @Test("a launch by hand opens the window, and nothing else does")
   func opensTheWindow() {
-    // Finder, Spotlight, the Dock: someone asking for the instrument.
     #expect(Launch.opensWindow(["/x/ctxscope"]))
-    // A session starting is not.
     #expect(!Launch.opensWindow(["/x/ctxscope", HookWiring.wokenFlag]))
-    // Nor is a diagnostic run, which says what it found and quits.
     #expect(!Launch.opensWindow(["/x/ctxscope", "--print-status"]))
     #expect(!Launch.opensWindow(["/x/ctxscope", "--print-hooks", "/tmp/x"]))
     #expect(!Launch.opensWindow(["/x/ctxscope", "--print-appearance"]))
-    // And the flag asks for one whatever the launch was.
     #expect(Launch.opensWindow(["/x/ctxscope", HookWiring.wokenFlag, Launch.windowFlag]))
   }
 

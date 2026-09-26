@@ -4,13 +4,9 @@ import Testing
 
 @testable import ctxscope
 
-/// Claude's settings file is written once, when Connect is clicked. Turning
-/// ctxscope off and on again is ctxscope's own business, so off survives a
-/// quit and only a person takes it back.
 @Suite("the power control")
 @MainActor
 struct PowerTests {
-  /// In memory, so a test leaves nothing in the preferences folder.
   private let settings = MemorySettings()
 
   private func store() -> PowerStore {
@@ -28,7 +24,6 @@ struct PowerTests {
     first.off()
     #expect(store.isOff)
 
-    // The process goes and a session starts it again.
     let second = Power(store: store, arguments: woken)
     #expect(second.isOff)
     #expect(store.isOff)
@@ -40,7 +35,6 @@ struct PowerTests {
     store.set(off: true)
     let power = Power(store: store, arguments: woken)
     #expect(power.isOff)
-    // The wake URL itself does nothing at all: being up is the whole point.
     #expect(power.isOff)
     #expect(store.isOff)
   }
@@ -57,12 +51,10 @@ struct PowerTests {
   func openWhileOff() {
     let store = store()
     store.set(off: true)
-    // A launch from Finder, Spotlight or the Dock carries no flag.
     let launched = Power(store: store, arguments: byHand)
     #expect(!launched.isOff)
     #expect(!store.isOff)
 
-    // And so does opening a window in a process that is already off.
     store.set(off: true)
     let running = Power(store: store, arguments: woken)
     #expect(running.isOff)
@@ -80,7 +72,6 @@ struct PowerTests {
     store.set(off: true)
     let power = Power(store: store, arguments: woken)
     #expect(power.isOff)
-    // `ctxscope://show` is a person asking, so it goes through `on()`.
     #expect(ScopeURL.parse(URL(string: ScopeURL.wake)!) == .wake)
     #expect(ScopeURL.parse(URL(string: "ctxscope://show")!) == .show(session: nil))
     power.on()

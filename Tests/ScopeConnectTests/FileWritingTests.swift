@@ -3,8 +3,7 @@ import Testing
 
 @testable import ScopeConnect
 
-/// What happens to the file itself. Everything here runs in a temporary
-/// directory of its own; no test in this package is allowed near `~/.claude`.
+/// Everything here runs in a temporary directory; no test may go near `~/.claude`.
 @Suite("writing to somebody else's files")
 struct FileWritingTests {
   private func temporary() throws -> ClaudeHome {
@@ -157,7 +156,6 @@ struct FileWritingTests {
     #expect(!FileManager.default.fileExists(atPath: home.skill.path))
     #expect(FileManager.default.fileExists(atPath: notes.path))
 
-    // With nothing of theirs beside it, the folder goes too.
     try FileManager.default.removeItem(at: notes)
     try connect.apply(try connect.plan(.connect(port: 45871)))
     try connect.apply(try connect.plan(.disconnect))

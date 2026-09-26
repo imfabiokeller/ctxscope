@@ -21,8 +21,6 @@ struct CacheBreakTests {
       usage: RequestUsage(cacheReadTokens: read, cacheCreationTokens: written))
   }
 
-  /// A system prompt of 1000, tools of 2000, a memory file of 500 and a prompt
-  /// of 100, with whatever `extra` enters at request 2.
   private static func lane(extra: [Segment], at time: Double = 2, read: Int) -> Lane {
     let segments =
       [

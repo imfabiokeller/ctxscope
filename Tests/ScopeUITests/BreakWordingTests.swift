@@ -4,7 +4,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// Each card says what the facts of its break carry, and no more.
 @Suite("Cache break cards")
 struct BreakWordingTests {
   private func card(_ lane: Lane) throws -> BreakCard {
@@ -87,7 +86,6 @@ struct BreakWordingTests {
     #expect(BreakWording.duration(7200) == "2 hours")
   }
 
-  /// The lane with the first block of a label leaving at a request.
   private func replacing(_ lane: Lane, label: String, diedAt request: Int) -> Lane {
     var segments = lane.segments
     if let index = segments.firstIndex(where: { $0.label == label }) {

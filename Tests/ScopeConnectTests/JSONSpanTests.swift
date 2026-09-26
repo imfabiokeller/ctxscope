@@ -3,9 +3,6 @@ import Testing
 
 @testable import ScopeConnect
 
-/// The span parser on its own. A settings file is somebody else's bytes, so
-/// every shape they can take has to come back as a value or as a refusal, and
-/// never as a crash.
 @Suite("the span parser")
 struct JSONSpanTests {
   private func parse(_ text: String) throws -> JSONSpan {
@@ -82,7 +79,6 @@ struct JSONSpanTests {
     let objects =
       String(repeating: "{\"a\":", count: 20_000) + "1" + String(repeating: "}", count: 20_000)
     #expect(throws: JSONSpan.Invalid.self) { try parse(objects) }
-    // The refusal names the limit rather than a byte offset nobody can use.
     do {
       _ = try parse(deep)
     } catch let invalid as JSONSpan.Invalid {
@@ -107,9 +103,7 @@ struct JSONSpanTests {
       "{\"a\": +1}", "{\"a\": .5}", "{\"a\": 1-2e+.}", "{\"a\": 1.2.3}",
     ])
   func lenientNumbers(text: String) {
-    // The scanner takes the span and moves on, because a number's digits are
-    // not something ctxscope has to understand. The write guard is what says
-    // no, because JSONSerialization does.
+    // The scanner accepts it on purpose; the write guard refuses it, as JSONSerialization does.
     #expect(!WriteGuard.isWellFormed(Data(text.utf8)))
   }
 
@@ -118,8 +112,8 @@ struct JSONSpanTests {
     var withNul = Data("{\"a\": \"x".utf8)
     withNul.append(0)
     withNul.append(contentsOf: Data("\"}".utf8))
-    // The parser reads it; the guard in front of every write is what refuses
-    // it, because the harness would read it differently.
+    // The parser reads it on purpose; the write guard refuses it, since the harness would read
+    // it differently.
     #expect(throws: Never.self) { try JSONSpan.parse(withNul) }
     #expect(!WriteGuard.isWellFormed(withNul))
 

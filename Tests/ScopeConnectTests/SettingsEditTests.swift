@@ -3,8 +3,6 @@ import Testing
 
 @testable import ScopeConnect
 
-/// The settings edits Connect makes. Every case is the same shape: take a file,
-/// connect, check what changed, disconnect, check the bytes came back.
 @Suite("settings edits")
 struct SettingsEditTests {
   static let port: UInt16 = 45871
@@ -51,8 +49,6 @@ struct SettingsEditTests {
     let root = try JSONSpan.parse(on)
     #expect(root.members?.map(\.name) == ["model", "permissions", "hooks"])
     #expect(String(decoding: on, as: UTF8.self).contains("\"Bash(git *)\""))
-    // One entry per event and not one more: writing the whole block for the
-    // first event used to leave the other five with two.
     #expect(try SettingsEdit.installedPorts(on).count == HookWiring.events.count)
     try roundTrip(text)
   }
@@ -161,7 +157,6 @@ struct SettingsEditTests {
   func changedInBetween() throws {
     let text = "{\n  \"model\": \"opus\"\n}\n"
     let on = try connected(text)
-    // Somebody adds a hook of their own after we connected.
     let theirs = String(decoding: on, as: UTF8.self).replacingOccurrences(
       of: "\"hooks\": {\n",
       with: "\"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"hooks\": []\n      }\n    ],\n"
@@ -235,7 +230,6 @@ struct SettingsEditTests {
     let off = String(decoding: try SettingsEdit.disconnected(Data(text.utf8)), as: UTF8.self)
     #expect(off.contains("say done"))
     #expect(try SettingsEdit.installedPorts(Data(off.utf8)).isEmpty)
-    // The entry that is left starts on its own line, indented the way it was.
     #expect(off.contains("\"SessionEnd\": [\n      {\n        \"hooks\": ["))
     #expect(!off.contains("[{"))
     #expect(!off.contains("[\n      ,"))

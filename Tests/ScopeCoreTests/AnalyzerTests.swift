@@ -2,8 +2,7 @@ import Testing
 
 @testable import ScopeCore
 
-/// Analyzers are pure functions of a recording, so the golden fixture here is
-/// the seeded synthetic recording: same seed, same numbers, every run.
+/// The golden fixture is the seeded synthetic recording: same seed, same numbers.
 @Suite("Analyzers")
 struct AnalyzerTests {
   private var lane: Lane {
@@ -41,12 +40,9 @@ struct AnalyzerTests {
     hints.observe(model: "m", peak: 790_000)
     let hinted = WindowEstimate(observing: snapshots, [], hints: hints)
     #expect(hinted.tokens == 1_000_000)
-    // The bound rests on a flag another session was started with, not on this
-    // one's own arithmetic.
     #expect(hinted.grade == .estimated)
     #expect(hinted.observedPeak == 150_000)
 
-    // A hint for another model says nothing about this one.
     var other = ModelWindowHints()
     other.observe(model: "n", peak: 790_000)
     #expect(WindowEstimate(observing: snapshots, [], hints: other).tokens == 200_000)
@@ -72,7 +68,6 @@ struct AnalyzerTests {
           usage: RequestUsage(cacheReadTokens: 900_000))
       ], [])
     #expect(large.tokens == 1_000_000)
-    // A compaction is a measured statement about where the harness compacts.
     let compacted = WindowEstimate(
       observing: [
         Snapshot(
@@ -111,7 +106,6 @@ struct AnalyzerTests {
   func bustCauses() {
     let analysis = CacheAnalyzer.run(lane)
     #expect(analysis.busts.allSatisfy { CacheBustCause.allCases.contains($0.cause) })
-    // The compaction of the synthetic lane is named as one.
     let compaction = lane.compactions.first?.atRequest
     if let compaction {
       #expect(analysis.busts.first { $0.request == compaction }?.cause == .compaction)
@@ -129,7 +123,6 @@ struct AnalyzerTests {
       snapshots: [
         Snapshot(index: 0, requestID: nil, timestamp: 0, model: "m", usage: usage),
         Snapshot(index: 1, requestID: nil, timestamp: 1, model: "m", usage: usage),
-        // Continues from request 0, not from request 1.
         Snapshot(
           index: 2, requestID: nil, timestamp: 2, model: "m", usage: rewound,
           parentRequest: 0),
@@ -160,7 +153,6 @@ struct AnalyzerTests {
     let costs = assessable.map { $0.unreferencedCarryTokens?.value ?? 0 }
     #expect(costs == costs.sorted(by: >))
     #expect(analysis.top(6).count == 6)
-    // Segments nothing can be said about rank last, never as zero cost.
     #expect(analysis.ranked.suffix(4).allSatisfy { !$0.isAssessable })
   }
 
@@ -192,8 +184,7 @@ struct AnalyzerTests {
     #expect(summary.survivingSegments > 0)
     #expect(summary.droppedSegments > 0)
     #expect(summary.droppedTokens.value > 0)
-    // The synthetic lane is built to be exact, so the harness number and the
-    // reconstruction agree.
+    // The synthetic lane is built to be exact.
     #expect(summary.disagreement == 0)
   }
 
@@ -217,9 +208,7 @@ struct AnalyzerTests {
     _ = SegmentCacheAnalyzer.run(lane)
     _ = DuplicationAnalyzer.run(lane)
     _ = CompactionAnalyzer.run(lane)
-    // The bar for a 1M window, measured rather than assumed. Generous
-    // against the 25 ms this actually takes, because a test machine under
-    // load is still a machine that has to pass.
+    // Generous against the 25 ms this takes, so a loaded test machine still passes.
     let elapsed = ContinuousClock.now - start
     #expect(elapsed < .seconds(2))
   }
@@ -238,8 +227,7 @@ struct AnalyzerTests {
     }
     let small = time(500)
     let large = time(4000)
-    // Eight times the requests must not cost anywhere near sixty four times
-    // the work, which is what the quadratic version did.
+    // 8x the requests must stay far below the 64x a quadratic version costs.
     #expect(large < max(small * 40, 0.5))
   }
 }

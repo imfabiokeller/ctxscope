@@ -2,8 +2,6 @@ import Testing
 
 @testable import ScopeCore
 
-/// A tool definition is judged by whether its tool was called. That is a yes
-/// or a no, so it does not belong in a ratio of reused words.
 @Suite("what counts towards the reused ratio")
 struct ReuseRatioTests {
   static func lane(toolTokens: Int) -> Lane {
@@ -42,8 +40,6 @@ struct ReuseRatioTests {
       ])
   }
 
-  /// A called tool is a whole block at 100 percent. Left in the ratio it
-  /// swamps the words.
   @Test("a called tool does not move the reused ratio")
   func calledToolIsNotInTheRatio() {
     let lane = Self.lane(toolTokens: 9000)
@@ -52,8 +48,6 @@ struct ReuseRatioTests {
     #expect(called.ratio == idle.ratio)
     #expect(called.inputRatio == idle.inputRatio)
     #expect(abs(called.ratio - 0.1) < 0.0001)
-    // The tokens are still in the context, counted where they cannot be
-    // assessed as words.
     #expect(called.totalTokens.value == 10_000)
     #expect(called.notAssessableTokens.value == 9000)
   }

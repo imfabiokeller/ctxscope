@@ -6,8 +6,7 @@ import Testing
 
 @testable import ctxscope
 
-/// A registrar that answers however the test needs, which is how the shortcut
-/// is checked without taking a key combination from the whole machine.
+/// Fake registrar, so the test never takes a key combination from the whole machine.
 @MainActor
 private final class FakeRegistrar: HotkeyRegistrar {
   struct Refused: Error {}
@@ -28,11 +27,9 @@ private final class FakeRegistrar: HotkeyRegistrar {
     action = nil
   }
 
-  /// The system delivering the combination.
   func press() { action?() }
 }
 
-/// The global shortcut that opens the window.
 @Suite("the shortcut")
 @MainActor
 struct HotkeyTests {
@@ -42,8 +39,7 @@ struct HotkeyTests {
     #expect(hotkey.keyCode == 8)
     #expect(hotkey.modifiers == [.command, .option, .control])
     #expect(hotkey.label == "\u{2303}\u{2325}\u{2318}C")
-    // Option-command-C alone is taken by four other applications, which is
-    // why control is in it.
+    // Option-command-C alone is taken by four other applications.
     #expect(hotkey.modifiers.contains(.control))
   }
 
@@ -68,8 +64,6 @@ struct HotkeyTests {
 
     registrar.press()
     #expect(opened == 1)
-    // Pressed again with the window already open, which is the case that
-    // brings it forward rather than opening a second one.
     registrar.press()
     #expect(opened == 2)
   }

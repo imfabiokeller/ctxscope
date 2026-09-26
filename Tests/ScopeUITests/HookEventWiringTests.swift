@@ -31,9 +31,6 @@ struct HookEventWiringTests {
     #expect(model.recording?.sessionID == "older")
   }
 
-  /// The one event ctxscope asks for. A transcript that has stopped growing
-  /// looks exactly like a session that has ended, and the difference is three
-  /// minutes of the item saying a session is live when it is over.
   @Test("the session ending drops it at once")
   func sessionEnd() async throws {
     let model = await model()
@@ -43,7 +40,6 @@ struct HookEventWiringTests {
     model.apply(event(.sessionEnd, "newer"))
     await model.settle()
     #expect(!model.liveness.isLive)
-    // It is still the focused session: ending is not unfocusing.
     #expect(model.list.focused == "newer")
   }
 
@@ -152,13 +148,10 @@ struct HookEventWiringTests {
     await model.settle()
     #expect(model.recording?.sessionID == "older")
 
-    // Without an id the substitution failed. The session written to most
-    // recently is taken once, rather than followed from then on.
     model.open(try #require(parse("ctxscope://show")))
     await model.settle()
     #expect(model.list.focused == "newer")
 
-    // Waking focuses nothing and opens nothing.
     model.open(.wake)
     await model.settle()
     #expect(model.list.focused == "newer")

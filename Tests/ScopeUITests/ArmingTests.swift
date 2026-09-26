@@ -5,10 +5,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// The watch is what makes the bars move while nothing else happens. It was
-/// armed before the scan had answered, so it watched an empty list, and the
-/// item only ever changed when a hook fired.
-/// A feed that lists the session only while its transcript is on disk.
 private struct VanishingFeed: SessionFeed {
   let recording: Recording
   let url: URL
@@ -30,8 +26,6 @@ private struct VanishingFeed: SessionFeed {
 @Suite("arming the watch")
 @MainActor
 struct ArmingTests {
-  /// A session at a real path, so what the watcher is holding can be looked at
-  /// rather than assumed.
   private func feed(at url: URL, recording: Recording) -> GrowingFeed {
     GrowingFeed(
       recording: recording,
@@ -58,14 +52,11 @@ struct ArmingTests {
     let recording = SyntheticRecording.make()
     let model = InstrumentModel(feed: feed(at: url, recording: recording))
 
-    // The order a launch does it in: the remembered focus, then start.
     model.focus(session: recording.sessionID)
     model.start()
     await model.settle()
 
     #expect(model.watchedPaths.contains(url.path))
-    // And the directory it sits in, which is where a subagents directory
-    // appears while the main transcript says nothing.
     #expect(model.watchedPaths.contains(url.deletingLastPathComponent().path))
     #expect(model.watchedPaths.count == 2)
     model.stop()
@@ -88,7 +79,6 @@ struct ArmingTests {
     try handle.write(contentsOf: Data("{}\n".utf8))
     try handle.close()
 
-    // The watcher reports once its burst has settled, and the read follows.
     try await WatcherTests.wait { (model.analysis?.requestCount ?? 0) > before }
     #expect((model.analysis?.requestCount ?? 0) > before)
     #expect(model.liveness.isLive)
@@ -117,24 +107,17 @@ struct ArmingTests {
     model.start()
     await model.settle()
 
-    // The project directory is watched, because that is where this session's
-    // subagents directory will appear. The other session's transcript is not:
-    // a session that is not shown is not a session anything reads, and a
-    // write inside a file is not a change to the directory holding it.
     #expect(model.watchedPaths.contains(url.path))
     #expect(!model.watchedPaths.contains(other.path))
     model.stop()
   }
 
-  /// L1: the descriptor stays on the old inode, so nothing would ever be read
-  /// again. One scan says whether this machine still has the session.
+  /// A file descriptor stays on the deleted inode, so only a scan can notice this.
   @Test("a transcript that is deleted is noticed, and the focus is let go")
   func transcriptDeleted() async throws {
     let url = try transcript()
     defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
     let recording = SyntheticRecording.make()
-    // A feed that lists the session only while its file is there, which is
-    // what a scan of the machine does.
     let model = InstrumentModel(
       feed: VanishingFeed(recording: recording, url: url))
     model.focus(session: recording.sessionID)
@@ -164,7 +147,6 @@ struct ArmingTests {
     await model.settle()
     #expect(model.watchedPaths.contains(url.path))
 
-    // Letting the focus go lets the watch go with it.
     model.focus(session: nil)
     await model.settle()
     #expect(model.watchedPaths.isEmpty)

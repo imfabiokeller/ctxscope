@@ -5,8 +5,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// A block is called by its tool and what it did wherever the window names
-/// it, and by its label until that is known.
 @Suite("block names")
 @MainActor
 struct BlockNamesTests {

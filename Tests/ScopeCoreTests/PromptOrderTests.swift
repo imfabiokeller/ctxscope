@@ -54,7 +54,6 @@ struct PromptOrderTests {
 
 @Suite("Segment cache state")
 struct SegmentCacheTests {
-  /// A lane that caches cleanly: every request writes exactly what entered.
   private func cleanLane() -> Lane {
     SyntheticRecording.make().mainLane!
   }
@@ -75,7 +74,6 @@ struct SegmentCacheTests {
   func rewrites() {
     let lane = cleanLane()
     let analysis = SegmentCacheAnalyzer.run(lane)
-    // The synthetic lane compacts once, which rewrites the cache.
     #expect(!analysis.rewriteRequests.isEmpty)
     #expect(analysis.perSegment.contains { $0.writes > 1 })
   }

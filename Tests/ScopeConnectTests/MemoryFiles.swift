@@ -3,13 +3,10 @@ import Testing
 
 @testable import ScopeConnect
 
-/// Files in memory. No test in this suite is allowed near a real home
-/// directory, and a store that has no path to one cannot drift into it.
+/// In memory: no test may go near a real home, and this store has no path to one.
 final class MemoryFiles: FileStore {
   private var entries: [String: Data] = [:]
   private var modes: [String: UInt16] = [:]
-  /// Paths this store refuses to replace, so the read-only path is testable
-  /// without a file on disk.
   var readOnly: Set<String> = []
 
   init(_ entries: [String: Data] = [:]) {
@@ -33,8 +30,6 @@ final class MemoryFiles: FileStore {
       && folders.contains(url.path)
   }
 
-  /// Directories this store knows about, so an empty one can be told from one
-  /// that was never there.
   var folders: Set<String> = []
 
   func checkWritable(_ url: URL) throws {

@@ -19,8 +19,6 @@ struct BlockCostTests {
       usage: RequestUsage(cacheReadTokens: read, cacheCreationTokens: written))
   }
 
-  /// A prefix of 1000, a prompt of 100 at request 1, and a request 2 that
-  /// wrote everything again.
   private static let broken = Lane(
     id: .main, window: .given(200_000),
     segments: [segment(0, .sys, 1000, born: 0), segment(1, .user, 100, born: 1)],

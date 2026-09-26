@@ -5,8 +5,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// The prompt rows' text comes from the session host, off the main actor, the
-/// way a block's text does.
 @Suite("prompt lines from the host")
 struct PromptLineHostTests {
   @Test("the host reads back one line per typed prompt of the lane it is asked about")

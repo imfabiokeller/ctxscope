@@ -4,15 +4,12 @@ import Testing
 
 @testable import ScopeCapture
 
-/// One API call written as several entries is the normal case, not the edge
-/// case: 6937 requests of this machine's transcripts are written as three.
 @Suite("Request groups")
 struct RequestGroupTests {
   static func entry(_ json: String) throws -> TranscriptEntry {
     TranscriptEntry(try JSONValue(parsing: Data(json.utf8)))
   }
 
-  /// The requests a list of entries makes, the way the live build groups them.
   static func requests(in entries: [TranscriptEntry]) -> [LaneBuilder.RequestGroup] {
     var log = RequestLog()
     for entry in entries where entry.kind == "assistant" && entry.usage != nil {
@@ -73,8 +70,6 @@ struct RequestGroupTests {
     let request = try #require(Self.requests(in: entries).first)
     var totals: [Int: Int] = [:]
     let reader = EntryReader()
-    // The entry without a thinking block, on its own. It must still know that
-    // the response it belongs to had thinking.
     let pieces = reader.pieces(of: entries[1])
     _ = LaneBuilder.groups(
       for: entries[1], pieces: pieces, origin: request, originIndex: 0, complete: true,

@@ -4,7 +4,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// No number over the timeline is drawn over another or cut through a glyph.
 @Suite("chart labels")
 struct ChartLabelTests {
   typealias Span = PromptLabels.Span
@@ -25,12 +24,10 @@ struct ChartLabelTests {
   func chip() {
     let spans = [Span(x: 0, width: 4), Span(x: 6, width: 12), Span(x: 20, width: 60)]
     let places = Self.place(spans, selected: 0)
-    // 7 wide with 6 either side is 19, centered on the band and held inside
-    // the chart.
+    // 7 wide with 6 either side is 19, centered on the band and held inside the chart.
     #expect(places[0] == .chip(x: 0, width: 19))
     #expect(places[1] == .hidden)
     #expect(places[2] == .inside)
-    // A selected band with room shows its number inside it like any other.
     #expect(Self.place(spans, selected: 2)[2] == .inside)
   }
 
@@ -53,8 +50,6 @@ struct ChartLabelTests {
     let groups = Self.group([20, 60, 70, 200])
     #expect(groups.map(\.label) == ["1", "2\u{2013}3", "4"])
     #expect(groups.map(\.breaks) == [0...0, 1...2, 3...3])
-    // The shared badge stands where the first one's would, as wide as its
-    // label needs.
     #expect(groups[1].x == 52)
     #expect(groups[1].width == 28)
   }
@@ -72,8 +67,6 @@ struct ChartLabelTests {
     }
   }
 
-  /// The widths a layout reckons with are the system font's own, so a number
-  /// said to fit does fit.
   @Test(
     "a number's width is what the system font sets it at",
     arguments: [(MeasuredRole.smallStrong, CGFloat(11)), (MeasuredRole.badge, CGFloat(10))])

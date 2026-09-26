@@ -4,8 +4,8 @@ import Testing
 
 @testable import ScopeCapture
 
-/// The fixtures are real transcripts put through `scripts/sanitize-transcript.py`:
-/// same structure, same usage numbers, same text lengths, no original text.
+/// Fixtures are real transcripts put through `scripts/sanitize-transcript.py`: structure and
+/// lengths kept, no original text.
 @Suite("ClaudeCodeAdapter")
 struct AdapterTests {
   static func fixture(_ name: String) throws -> [TranscriptEntry] {
@@ -56,10 +56,6 @@ struct AdapterTests {
     #expect(Set(prefix.map(\.band)) == [.sys, .tools, .mcp, .mem])
     #expect(prefix.reduce(0) { $0 + $1.tokens.value } > 10_000)
     #expect(prefix.allSatisfy { $0.tokens.grade == .estimated })
-    // This session recorded all four: the system prompt and the memory files
-    // as their own text, the tools as the snapshot's definitions. So no band
-    // is one lump the prior invented, and every block has a size the
-    // estimator could work out from something.
     #expect(prefix.count { $0.band == .tools } > 1)
     #expect(prefix.count { $0.band == .mcp } > 1)
     #expect(prefix.allSatisfy { $0.characters > 0 })
@@ -67,16 +63,11 @@ struct AdapterTests {
 
   @Test("thinking is sized from thinking tokens, not from its summary")
   func thinkingIsMeasured() throws {
-    // This fixture reports thinking_tokens on 14 of its 16 requests.
     let lane = try Self.lane("short-session").lane
     let thinking = lane.segments.filter { $0.band == .think }
-    // A test that passes when the fixture has no thinking cannot fail.
     #expect(thinking.count == 13)
     #expect(lane.snapshots.filter { $0.usage.thinkingTokens > 0 }.count == 14)
 
-    // The invariant, stated exactly: the thinking that entered at a request
-    // sums to what the API charged the response that produced it for
-    // thinking. Nothing about the summary's length enters into it.
     var checked = 0
     for (index, snapshot) in lane.snapshots.enumerated() where snapshot.usage.thinkingTokens > 0 {
       let entered = thinking.filter { $0.born == index + 1 && $0.originRequest == index }
@@ -90,8 +81,7 @@ struct AdapterTests {
 
   @Test("subagent lanes are found and linked to the call that spawned them")
   func subagentDiscovery() throws {
-    // A projects folder of its own, laid out the way the harness lays one
-    // out, so the test never reads this machine's sessions.
+    // A projects folder of its own, so the test never reads this machine's sessions.
     let manager = FileManager.default
     let root = manager.temporaryDirectory.appending(path: "ctxscope-test-\(UUID().uuidString)")
     defer { try? manager.removeItem(at: root) }
@@ -114,7 +104,6 @@ struct AdapterTests {
     let reference = try #require(subagents.first)
     #expect(reference.lane.rawValue == "agent-a1")
     #expect(reference.url.pathExtension == "jsonl")
-    // The meta file is what links a lane to its parent.
     #expect(reference.agentType == "Explore")
     #expect(reference.toolUseID == "toolu_a1")
   }

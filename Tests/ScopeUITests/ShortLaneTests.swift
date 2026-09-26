@@ -4,10 +4,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// A session with one request, and one with two.
-///
-/// A window opened on a brand new session must not read 0 / 0 or say "since
-/// request 0, 0 requests". Everything here is that case.
 @Suite("the shortest lanes")
 struct ShortLaneTests {
   @Test("a lane of one request reads as request one of one")
@@ -15,7 +11,6 @@ struct ShortLaneTests {
     #expect(RequestNumber.counter(0, of: 1) == "1 / 1")
     #expect(RequestNumber.counter(1, of: 2) == "2 / 2")
     #expect(RequestNumber.name(0) == "request 1")
-    // A lane that has no requests yet says so rather than claiming one.
     #expect(RequestNumber.counter(0, of: 0) == "0 / 0")
   }
 

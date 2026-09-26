@@ -38,12 +38,10 @@ struct ThemeTests {
     #expect(rgba.red == 1)
     #expect(abs(rgba.alpha - 0.075) < 0.0001)
 
-    // A known OKLCH: mid lightness, no chroma, is a neutral grey.
     let grey = try #require(ThemeColor("oklch(0.5 0 0)"))
     #expect(abs(grey.red - grey.green) < 0.001)
     #expect(abs(grey.green - grey.blue) < 0.001)
-    // OKLab lightness 0.5 is 0.125 in linear light, which is 0.389 once the
-    // sRGB transfer function has been applied.
+    // OKLab lightness 0.5 is 0.125 in linear light, 0.389 after the sRGB transfer function.
     #expect(abs(grey.red - 0.389) < 0.002)
 
     #expect(ThemeColor("not a color") == nil)
@@ -66,7 +64,6 @@ struct ThemeTests {
     #expect(ThemeColor("oklch(2 0.1 30)") == nil)
     #expect(ThemeColor("oklch(0.5 -1 30)") == nil)
     #expect(ThemeColor("#12345") == nil)
-    // And the ones that are colors still are.
     #expect(ThemeColor("rgba(255,255,255,.075)") != nil)
     #expect(ThemeColor("oklch(0.72 0.19 25)") != nil)
   }

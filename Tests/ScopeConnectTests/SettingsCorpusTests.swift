@@ -3,17 +3,11 @@ import Testing
 
 @testable import ScopeConnect
 
-/// A corpus of settings files, every one of them made up here.
-///
-/// Every shape of settings file anybody has thought of, so the next one is
-/// added to a list. Nothing in it comes from a real machine: the shapes are
-/// what matters, never the contents.
+/// Every file here is made up; nothing comes from a real machine.
 @Suite("a corpus of settings files")
 struct SettingsCorpusTests {
   static let port: UInt16 = 45871
 
-  /// Files the harness reads. Connecting and disconnecting has to give the
-  /// same bytes back.
   static let valid: [(String, String)] = [
     ("empty object", "{}"),
     ("empty object with a newline", "{}\n"),
@@ -125,8 +119,6 @@ struct SettingsCorpusTests {
     ),
   ]
 
-  /// Files ctxscope will not touch. Every one of them has to come back with
-  /// the same bytes and a refusal somebody can read.
   static let refused: [(String, String)] = [
     ("a comment", "// mine\n{\n  \"model\": \"opus\"\n}\n"),
     ("a block comment", "{\n  /* mine */ \"model\": \"opus\"\n}\n"),
@@ -151,14 +143,11 @@ struct SettingsCorpusTests {
       String(repeating: "[", count: 5_000)
         + String(repeating: "]", count: 5_000)
     ),
-    // JSON.parse takes a lone surrogate and JSONSerialization does not, so
-    // ctxscope leaves the file alone. The span parser reads it without
-    // trapping either way, which is what finding 4 was about.
+    // JSON.parse accepts a lone surrogate and JSONSerialization does not.
     ("a lone surrogate", #"{"a": "\uD800\u0041"}"#),
     ("a surrogate pair in the wrong order", #"{"a": "\uDC00\uD800"}"#),
   ]
 
-  /// Files that are valid JSON but not a settings file ctxscope can work on.
   static let wrongShape: [(String, String)] = [
     ("hooks is null", "{\n  \"hooks\": null\n}\n"),
     ("hooks is an array", "{\n  \"hooks\": []\n}\n"),
@@ -214,8 +203,6 @@ struct SettingsCorpusTests {
     }
   }
 
-  /// Files ctxscope has already written to. Connecting again settles them
-  /// rather than doubling them, and undo takes only what ctxscope put there.
   @Test(
     "a file ctxscope has already written to",
     arguments: [
@@ -237,7 +224,6 @@ struct SettingsCorpusTests {
     let original = Data("{\n  \"model\": \"opus\"\n}\n".utf8)
     var half = String(
       decoding: try SettingsEdit.connected(original, port: Self.port), as: UTF8.self)
-    // Take one event back out by hand, the way a half finished write would.
     for event in [HookWiring.events[0]] {
       let start = half.range(of: "    \"\(event)\": [")
       guard let start else { continue }
@@ -257,8 +243,7 @@ struct SettingsCorpusTests {
 
   @Test("somebody else's http hook on our path is theirs")
   func foreignHTTPHook() throws {
-    // `localhost` is the same machine by another name, and ctxscope writes
-    // 127.0.0.1. An entry it did not write is one it does not touch.
+    // ctxscope writes 127.0.0.1, so a `localhost` entry is not its own.
     let text = """
       {
         "hooks": {

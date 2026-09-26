@@ -31,8 +31,6 @@ struct ReferenceAnalyzerTests {
   @Test("the input side is reported on its own")
   func inputBandsAreReportedApart() {
     let lane = SyntheticRecording.make().mainLane!
-    // Only what the model produced is referenced. The input ratio must not
-    // pick any of that up.
     let findings = lane.segments.map {
       ReferenceFinding(
         segment: $0.id,

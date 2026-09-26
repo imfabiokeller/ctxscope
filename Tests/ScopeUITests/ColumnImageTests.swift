@@ -20,7 +20,6 @@ struct ColumnImageTests {
       chart: data.chart, layout: layout, key: key, theme: theme, metrics: metrics)
   }
 
-  /// The alpha of one pixel, counted from the image's bottom left.
   private func alpha(_ image: CGImage, x: Int, y: Int) throws -> UInt8 {
     var pixel = [UInt8](repeating: 0, count: 4)
     let context = try #require(
@@ -42,7 +41,6 @@ struct ColumnImageTests {
     let full = try alpha(image, x: Int(layout.center(3)), y: 2)
     #expect(full == 255)
     #expect(abs(Double(dimmed) - 255 * theme.chart.dimmedOpacity) < 2)
-    // Above the tallest column there is nothing.
     #expect(try alpha(image, x: Int(layout.center(3)), y: 270) == 0)
   }
 
@@ -78,9 +76,6 @@ struct ColumnImageTests {
     #expect(ContextPlot.magnifierX(100, width: 340, offset: 16, room: 300) == 0)
   }
 
-  /// Hundreds of small blocks drew a rule each, and the rules lined up across
-  /// the columns as stripes. A rule stands only between two blocks that are
-  /// both tall enough to be read.
   @Test("a rule stands between two blocks only when both are tall enough")
   func rules() {
     let tall = metrics.blockGapMinimumPixels

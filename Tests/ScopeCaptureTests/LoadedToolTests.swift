@@ -4,9 +4,6 @@ import Testing
 
 @testable import ScopeCapture
 
-/// Tools a search loaded part way through a session. `deferred_tools_record`
-/// carries their full definitions and they used to be dropped, so the window
-/// could not show a tool the agent had actually gone and fetched.
 @Suite("tools loaded mid-session")
 struct LoadedToolTests {
   static func entry(_ names: [String], uuid: String = UUID().uuidString, parent: String? = nil)
@@ -44,18 +41,13 @@ struct LoadedToolTests {
     #expect(pieces.map(\.label) == ["Read", "mcp__srv__verb"])
     #expect(pieces.allSatisfy { $0.contentClass == .json })
     #expect(pieces.allSatisfy { !$0.text.isEmpty })
-    // Judged by its call, like every other tool definition.
     #expect(pieces.map(\.toolName) == ["Read", "mcp__srv__verb"])
   }
 
-  /// They arrive in the turn that loaded them, not as a prefix that changed:
-  /// on four real sessions the request after one of these reads back exactly
-  /// what the request before it read plus what it wrote.
   @Test("a loaded tool is a block of the request it arrived at")
   func bornAtTheRequestThatLoadedIt() throws {
-    // Spliced into the chain: the record takes the next entry's parent, and
-    // the next entry takes the record's place, which is how the harness writes
-    // one.
+    // Spliced in the way the harness writes one: the record takes the next entry's parent, and
+    // the next entry takes the record's place.
     let lines = try PrefixParityTests.lines("short-session")
     let cut = try #require(
       lines.indices.dropFirst(lines.count / 2).first { index in

@@ -5,9 +5,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// What the popover says, worked out from the same analyses the window
-/// shows, and a popover that follows the model and the theme while it is
-/// open.
 @Suite("the popover's content", .serialized)
 @MainActor
 struct PopoverContentTests {
@@ -127,7 +124,6 @@ struct PopoverContentTests {
     let recent = PopoverPresenter.recent(entries, excluding: "s0", limit: 10, context: context)
     #expect(recent.count == 10)
     #expect(recent.first?.id == "s1")
-    // A session with no title yet is called by its folder.
     #expect(recent.first?.name == "p1")
     #expect(recent.first?.detail == "~/code/p1")
     #expect(recent.first?.ago == "10 min ago")
@@ -147,8 +143,6 @@ struct PopoverContentTests {
     let model = try await model()
     let themes = ThemeStore(appearance: .light)
     let shown = try render(model, themes: themes)
-    // A session that goes away leaves a popover that says so rather than
-    // one that keeps showing numbers nothing stands behind.
     model.focus(session: nil)
     await model.settle()
     #expect(try render(model, themes: themes) != shown)
@@ -167,7 +161,6 @@ struct PopoverContentTests {
   }
 }
 
-/// How the popover says when, and where.
 @Suite("the popover's words")
 struct PopoverWordsTests {
   private var utc: Calendar {
@@ -214,7 +207,6 @@ struct PopoverWordsTests {
     #expect(bars.last?.height == Double(totals[999]) / 200_000)
     #expect(bars[0].isBreak)
     #expect(bars.dropFirst().allSatisfy { !$0.isBreak })
-    // A context past its window is the top of the chart, never past it.
     let over = SparkBars.make(totals: [300_000], breaks: [], window: 200_000, capacity: 164)
     #expect(over.first?.height == 1)
   }

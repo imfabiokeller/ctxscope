@@ -2,8 +2,6 @@ import Testing
 
 @testable import ScopeCore
 
-/// The bands held against the harness's own
-/// `/context` report, with the error per category.
 @Suite("the harness comparison")
 struct HarnessCheckTests {
   static func lane(report: ContextReport?, prefix: Int, rest: Int) -> Lane {
@@ -57,9 +55,6 @@ struct HarnessCheckTests {
     #expect(check.detail.contains("0%"))
   }
 
-  /// A report that describes a different session is not a failure of the
-  /// estimator, it is a report that does not belong to this lane, and the
-  /// check says so rather than passing quietly.
   @Test("a report that cannot be about this lane fails the check")
   func mismatchedReport() throws {
     let lane = Self.lane(

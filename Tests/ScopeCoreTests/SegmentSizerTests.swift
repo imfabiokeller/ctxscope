@@ -103,11 +103,9 @@ struct SegmentSizerTests {
         absorbSurplus: false
       )
     )
-    // The group is measured at 600, and the 400 tokens of the delta that it
-    // cannot explain become a change to the unobserved prefix.
+    // The group is measured at 600; the 400 it cannot explain goes to the unobserved prefix.
     #expect(result.tokens.map(\.value).reduce(0, +) == 600)
     #expect(result.unallocated == 400)
-    // A split of a measured whole is arithmetic on it, not the API's number.
     #expect(result.tokens.allSatisfy { $0.grade == .derived })
   }
 
@@ -132,8 +130,6 @@ struct SegmentSizerTests {
     )
     #expect(result.tokens.map(\.value).reduce(0, +) == 100)
     #expect(result.tokens.allSatisfy { $0.value >= 0 })
-    // The group had to be shrunk, so its member is no longer what the API
-    // reported.
     #expect(result.tokens[0].grade != .measured)
   }
 

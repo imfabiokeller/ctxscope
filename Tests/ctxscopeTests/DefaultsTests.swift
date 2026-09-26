@@ -3,9 +3,7 @@ import Testing
 
 @testable import ctxscope
 
-/// Settings that live for the length of a test and nowhere else. A suite made
-/// with `UserDefaults(suiteName:)` writes a file into the preferences folder
-/// of whoever runs the tests, one per run.
+/// In memory: a `UserDefaults(suiteName:)` suite writes a file into the real preferences folder.
 final class MemorySettings: Settings {
   private var values: [String: Any] = [:]
 
@@ -15,10 +13,8 @@ final class MemorySettings: Settings {
   func removeObject(forKey key: String) { values[key] = nil }
 }
 
-/// ctxscope's two settings belong to the person using it. A check that
-/// launches the app would write a fixture's session id into the real focus and
-/// leave it there, and a temporary home does not help: `CFFIXED_USER_HOME`
-/// does not redirect `UserDefaults`.
+/// A launch must never write into the real settings, and a temporary home does not help:
+/// `CFFIXED_USER_HOME` does not redirect `UserDefaults`.
 @Suite("where the settings are kept")
 struct DefaultsTests {
   @Test("a diagnostic run writes to a suite of its own")
@@ -41,8 +37,6 @@ struct DefaultsTests {
         === UserDefaults.standard)
   }
 
-  /// The demo runs the app under a home of its own and focuses its session.
-  /// That focus is the demo's, and must not replace the real one.
   @Test("a launch with a home of its own writes to a suite of its own")
   func fixedHomeSuite() {
     let environment = ["CFFIXED_USER_HOME": "/tmp/ctxscope-demo"]
@@ -53,8 +47,6 @@ struct DefaultsTests {
     #expect(Defaults.fixedHomeSuite != UserDefaults.globalDomain)
   }
 
-  /// The focus and the power state a run writes go where that run's settings
-  /// are, and nowhere near the real ones.
   @Test("the two settings are whatever they are written into")
   func settingsAreSeparate() {
     let settings = MemorySettings()
@@ -73,8 +65,6 @@ struct DefaultsTests {
   }
 }
 
-/// The focused session is remembered across launches, and it is the one thing
-/// a scan is allowed to take back.
 @Suite("the remembered focus")
 struct FocusStoreTests {
   private let settings = MemorySettings()
@@ -96,7 +86,6 @@ struct FocusStoreTests {
   @Test("it survives the process going away")
   func acrossLaunches() {
     FocusStore(defaults: settings).set("kept")
-    // A second store over the same settings is what the next launch has.
     #expect(FocusStore(defaults: settings).session == "kept")
   }
 

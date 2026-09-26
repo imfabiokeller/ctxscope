@@ -41,22 +41,17 @@ struct RetirementTests {
     #expect(live.count == 2)
   }
 
-  /// F3: a set that frees far more room than anything entering can take would
-  /// turn a third of itself into Unattributed. That is the hypothesis being
-  /// wrong, so it is rejected and the best fitting set is taken instead.
   @Test("the thinking hypothesis is rejected when it would leave a third unattributed")
   func rejectedWhenItLeavesTooMuch() {
     var (segments, live) = lane([
       (.think, 6000), (.think, 6000), (.read, 3000), (.user, 2000),
     ])
-    // Thinking is 12,000 and the overhang is 4,000, so 8,000 would be handed
-    // to something the estimator says is 3,000. The 5,000 left over is past a
-    // third of what the set freed.
+    // Thinking 12,000, overhang 4,000: 8,000 would go to something estimated at 3,000, and
+    // the 5,000 left over is past a third of what the set freed.
     let result = LaneBuilder.retire(
       overhang: 4000, enteringEstimate: 3000, at: 5, segments: &segments, liveSlots: &live)
     #expect(result.hypothesis == "best fitting set of older content")
     #expect(result.tokens >= 4000)
-    // The thinking hypothesis would have taken both thinking blocks.
     #expect(!(segments[0].died != nil && segments[1].died != nil))
   }
 
@@ -65,14 +60,12 @@ struct RetirementTests {
     var (segments, live) = lane([
       (.think, 400), (.think, 500), (.read, 3000), (.user, 200),
     ])
-    // Thinking is 900. An overhang of 700 leaves 200 for what is entering,
-    // and the estimate is 210, so the set explains the drop.
+    // Thinking 900, overhang 700: 200 left for entering content estimated at 210.
     let result = LaneBuilder.retire(
       overhang: 700, enteringEstimate: 210, at: 5, segments: &segments, liveSlots: &live)
     #expect(result.hypothesis == "all live thinking left")
     #expect(result.tokens == 900)
     #expect(result.count == 2)
-    // The room a real set frees is not an overshoot.
     #expect(result.overshoot == 0)
     #expect(segments[0].deathCause == .inferred)
     #expect(segments[0].died == 5)
@@ -82,8 +75,7 @@ struct RetirementTests {
   @Test("a set that does not fit what is entering is rejected")
   func setHypothesisRejected() {
     var (segments, live) = lane([(.think, 400), (.read, 3000), (.user, 200)])
-    // Thinking is 400 against an overhang of 100, so the set would leave 300
-    // for entering content the estimator puts at 4000. It does not fit.
+    // Thinking 400, overhang 100: 300 left for entering content estimated at 4000.
     let result = LaneBuilder.retire(
       overhang: 100, enteringEstimate: 4000, at: 5, segments: &segments, liveSlots: &live)
     #expect(result.hypothesis == "best fitting set of older content")
@@ -92,8 +84,7 @@ struct RetirementTests {
   @Test("the fallback takes thinking first and reports its overshoot")
   func fallbackOrder() {
     var (segments, live) = lane([(.read, 3000), (.think, 400), (.sys, 5000)])
-    // Nothing is entering, so the room needed is the overhang alone. No
-    // segment is that small, and the smallest one that covers it is taken.
+    // Nothing is entering, so the room needed is the overhang alone.
     let result = LaneBuilder.retire(
       overhang: 100, enteringEstimate: 0, at: 5, segments: &segments, liveSlots: &live)
     #expect(result.hypothesis == "best fitting set of older content")
@@ -105,9 +96,7 @@ struct RetirementTests {
   @Test("the room freed is the room that is needed, not whatever is oldest")
   func aimsAtTheRoomNeeded() {
     var (segments, live) = lane([(.think, 10_016), (.read, 900), (.bash, 600), (.srch, 400)])
-    // A large thinking block next to an overhang of 639 and a small input
-    // entering. Taking the oldest first would free 10,016 tokens and hand
-    // the surplus to the input.
+    // Taking the oldest first would free 10,016 tokens and hand the surplus to the input.
     let result = LaneBuilder.retire(
       overhang: 639, enteringEstimate: 830, at: 9, segments: &segments, liveSlots: &live)
     #expect(result.tokens == 1300)
@@ -138,13 +127,11 @@ struct RetirementTests {
   func realLane() throws {
     let lane = try AdapterTests.lane("compaction-session").lane
     #expect(Validator.run(lane).mismatches.isEmpty)
-    // Whatever was inferred is reported rather than hidden.
     let inferred = lane.segments.filter { $0.deathCause == .inferred }
     #expect(inferred.count == lane.stats.inferredRetirements)
     #expect(
       lane.events.filter { $0.kind == .inferredRetirement }.count
         == (lane.stats.inferredRetirements > 0 ? 1 : 0))
-    // Everything the compaction dropped is attributed to the compaction.
     if let event = lane.compactions.first {
       #expect(lane.segments.contains { $0.died == event.atRequest })
     }

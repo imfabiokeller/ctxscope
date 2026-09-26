@@ -3,13 +3,10 @@ import Testing
 
 @testable import ScopeUI
 
-/// The watcher is what makes following a live session cost nothing while
-/// nothing is happening, so what it does and does not report matters.
 @Suite("Session watcher")
 @MainActor
 struct WatcherTests {
-  /// Waits for what the watcher is expected to report rather than for a fixed
-  /// stretch of time, which a loaded machine does not respect.
+  /// Waits for the report rather than a fixed time, which a loaded machine does not respect.
   static func wait(
     limit: Duration = .seconds(5), until ready: @MainActor () -> Bool
   ) async throws {
@@ -45,7 +42,6 @@ struct WatcherTests {
     try handle.close()
 
     try await Self.wait { calls > 0 }
-    // A burst settles into one call.
     #expect(calls == 1)
     watcher.stop()
   }
@@ -60,16 +56,13 @@ struct WatcherTests {
     watcher.onChange = { calls += 1 }
     watcher.watch([folder])
 
-    // Which is how a subagent lane appearing beside a transcript is noticed.
     try Data("{}".utf8).write(to: folder.appending(path: "new.jsonl"))
     try await Self.wait { calls > 0 }
     #expect(calls > 0)
     watcher.stop()
   }
 
-  /// A descriptor follows the file it was opened on. After a rename it
-  /// reports on an inode nobody writes to, and the name everybody writes to is
-  /// watched by nothing: 40 appended lines cost no CPU and changed nothing.
+  /// A descriptor follows its inode, so after a rename the watched name gets nothing.
   @Test("a watched file that is renamed is reported and let go of")
   func renamed() async throws {
     let folder = try temporary()

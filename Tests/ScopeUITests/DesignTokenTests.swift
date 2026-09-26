@@ -3,11 +3,8 @@ import Testing
 
 @testable import ScopeUI
 
-/// The theme's roles, held to what a person has to be able to read in both
-/// appearances.
 @Suite("Design tokens")
 struct DesignTokenTests {
-  /// Text, and every surface it is set on.
   private static func textPairs(_ theme: Theme) -> [(String, ThemeColor, ThemeColor)] {
     let text = theme.text
     let surface = theme.surface
@@ -26,8 +23,7 @@ struct DesignTokenTests {
         pairs.append(("\(name) on \(place)", color, background))
       }
     }
-    // Tertiary is only ever set on a control's face and on the bar and window
-    // that controls stand on.
+    // Tertiary is only set on a control's face and on the bar and window controls stand on.
     for (place, background) in reading.prefix(4) + [("control", theme.control.fill)] {
       pairs.append(("tertiary on \(place)", text.tertiary, background))
     }
@@ -62,8 +58,6 @@ struct DesignTokenTests {
     }
   }
 
-  /// A disabled control has to look unavailable, so it may not read as well
-  /// as the text around it, but it still has to be there.
   @Test("a disabled control is fainter than text and still visible")
   func disabled() {
     for theme in ThemeLoader.bundled() {
@@ -74,9 +68,6 @@ struct DesignTokenTests {
     }
   }
 
-  /// The six kinds are told apart by color alone in the legend and the bars.
-  /// Each has to stand off the track it is drawn on, and no two may be the
-  /// same.
   @Test("the six kind colors differ and stand off the chart track")
   func kinds() {
     for theme in ThemeLoader.bundled() {
@@ -88,8 +79,6 @@ struct DesignTokenTests {
     }
   }
 
-  /// The hues are what a person learns, so the dark theme keeps each one
-  /// close to the light theme's.
   @Test("a kind keeps its hue across appearances")
   func kindHues() throws {
     let themes = ThemeLoader.bundled()

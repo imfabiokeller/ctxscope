@@ -4,9 +4,6 @@ import Testing
 
 @testable import ctxscope
 
-/// The item sits in a row of other items, and every point it gains pushes all
-/// of them along. Measured on the real bar it went 67, 60, 67 points as its
-/// number gained a digit and lost it again.
 @Suite("the number in the bar")
 @MainActor
 struct MenuBarTypeTests {
@@ -41,7 +38,6 @@ struct MenuBarTypeTests {
     let one = NSAttributedString(string: "1", attributes: [.font: font]).size().width
     let eight = NSAttributedString(string: "8", attributes: [.font: font]).size().width
     #expect(abs(one - eight) < 0.01)
-    // And the space that holds a digit's room is a digit wide.
     let space = NSAttributedString(
       string: MenuBarType.figureSpace, attributes: [.font: font]
     ).size().width

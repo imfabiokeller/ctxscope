@@ -3,11 +3,8 @@ import Testing
 
 @testable import ScopeCapture
 
-/// The project a session is filed under, read back as the folder it ran in.
 @Suite("session discovery")
 struct SessionDiscoveryTests {
-  /// A projects folder holding one transcript under `slug`, whose entries say
-  /// they ran in `cwd`.
   private static func projects(slug: String, cwd: String) throws -> URL {
     let root = FileManager.default.temporaryDirectory
       .appending(path: "ctxscope-discovery-\(UUID().uuidString)")

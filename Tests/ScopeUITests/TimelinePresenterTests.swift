@@ -53,7 +53,6 @@ struct TimelinePresenterTests {
     #expect(detail.facts[1].detail == "3 requests")
     #expect(detail.facts[3].value == "0")
     #expect(detail.facts[3].detail == nil)
-    // The largest addition takes the whole row, with its kind and its size.
     #expect(detail.facts[4].value == "file3.swift")
     #expect(detail.facts[4].trailing == "~1.0k")
     #expect(detail.facts[4].isWide)

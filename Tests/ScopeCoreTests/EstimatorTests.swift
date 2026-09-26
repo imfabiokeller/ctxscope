@@ -4,8 +4,6 @@ import Testing
 
 @Suite("Estimator calibration")
 struct EstimatorTests {
-  /// Builds deltas from known rates, so the fit can be checked against the
-  /// answer rather than against itself.
   private func sample(
     prose: Int = 0,
     code: Int = 0,
@@ -103,9 +101,6 @@ struct EstimatorTests {
   @Test("framing is charged per request, not per block")
   func framingIsPerRequest() {
     let rates = EstimatorRates.prior
-    // A 50 character reminder is a small segment, whatever else arrived with
-    // it. Before this it came out at 82 tokens, which is 0.6 characters per
-    // token and says nothing true about the reminder.
     let estimate = rates.estimate(characters: 50, contentClass: .prose)
     #expect(estimate < 30)
     #expect(rates.tokensPerRequest > 50)

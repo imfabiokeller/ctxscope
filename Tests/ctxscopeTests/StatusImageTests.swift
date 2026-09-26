@@ -5,9 +5,6 @@ import Testing
 
 @testable import ctxscope
 
-/// The image the item puts in the bar. It was drawn once, at whatever scale
-/// the main display had, which on a second display with another scale put the
-/// half point edges between pixels.
 @Suite("the image in the bar", .serialized)
 @MainActor
 struct StatusImageTests {
@@ -27,7 +24,6 @@ struct StatusImageTests {
     #expect(reps.allSatisfy { $0.size == StatusGlyph.size })
     let widths = Set(reps.map(\.pixelsWide)).sorted()
     #expect(widths == [Int(StatusGlyph.size.width), Int(StatusGlyph.size.width * 2)])
-    // Which is the point of them: the two are not the same picture.
     let png = { (rep: NSBitmapImageRep) in rep.representation(using: .png, properties: [:]) }
     #expect(png(reps[0]) != png(reps[1]))
   }

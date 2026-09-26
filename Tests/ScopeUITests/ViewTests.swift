@@ -4,7 +4,6 @@ import Testing
 
 @testable import ScopeUI
 
-/// The words of the window's header.
 @Suite("Views")
 struct ViewTests {
   @Test("the header names the lane shown and counts the others")
