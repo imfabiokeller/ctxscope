@@ -74,8 +74,8 @@ public struct WindowEstimate: Sendable, Codable, Hashable {
     return min(1, Double(tokens) / Double(self.tokens))
   }
 
-  /// Labeled default for a lane that never compacted. Observed compactions
-  /// fired near 99.9 percent.
+  // A conservative guess for a lane that never compacted; observed
+  // compactions fired later, near 99.9 percent.
   public static let defaultCompactShare = 0.90
 
   public var autoCompactTokens: Tokens {

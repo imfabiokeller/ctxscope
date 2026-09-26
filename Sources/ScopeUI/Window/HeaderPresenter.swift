@@ -6,7 +6,7 @@ public enum HeaderPresenter {
     guard let recording else { return PopUpTitle("No session", emphasized: true) }
     return PopUpTitle(
       recording.title ?? String(recording.sessionID.prefix(8)),
-      subtitle: folder(recording.project), emphasized: true)
+      subtitle: UIFormat.folder(recording.project, home: NSHomeDirectory()), emphasized: true)
   }
 
   public static func lane(_ shown: LaneID, in lanes: [SessionList.LaneEntry]) -> PopUpTitle {
@@ -28,10 +28,4 @@ public enum HeaderPresenter {
   }
 
   public static let liveTitle = "Live"
-
-  static func folder(_ path: String) -> String {
-    let home = NSHomeDirectory()
-    guard !home.isEmpty, path == home || path.hasPrefix(home + "/") else { return path }
-    return "~" + path.dropFirst(home.count)
-  }
 }

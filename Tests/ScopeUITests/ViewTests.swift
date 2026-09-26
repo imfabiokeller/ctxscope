@@ -19,7 +19,8 @@ struct ViewTests {
     #expect(HeaderPresenter.lane(LaneID("agent-1"), in: lanes).title == "Lane: explore")
     #expect(HeaderPresenter.lane(.main, in: []).subtitle == nil)
     #expect(HeaderPresenter.item(lanes[1]) == "explore · 10 requests · 50%")
-    #expect(HeaderPresenter.folder(NSHomeDirectory() + "/code/api") == "~/code/api")
-    #expect(HeaderPresenter.folder("/tmp/api") == "/tmp/api")
+    #expect(
+      UIFormat.folder(NSHomeDirectory() + "/code/api", home: NSHomeDirectory()) == "~/code/api")
+    #expect(UIFormat.folder("/tmp/api", home: NSHomeDirectory()) == "/tmp/api")
   }
 }
