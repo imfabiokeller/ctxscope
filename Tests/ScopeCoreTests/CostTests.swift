@@ -20,10 +20,10 @@ struct CostTests {
   func oneRequest() {
     let usage = RequestUsage(
       inputTokens: 1000, cacheReadTokens: 100_000, cacheCreationTokens: 4000,
-      outputTokens: 2000)
-    let cost = CostAnalyzer.run(Self.lane([usage]))
+      outputTokens: 2000, ephemeral1hTokens: 4000)
+    let cost = CostAnalyzer.run(Self.lane([usage], models: ["claude-fable-5-1"]))
     let request = cost.perRequest[0]
-    // 100k at 0.25, 4k at 20, 1k at 10, per million.
+    // 100k at 0.25, 4k at the one-hour write price 20, 1k at 10, per million.
     #expect(abs(request.context - (0.025 + 0.08 + 0.01)) < 1e-12)
     #expect(abs(request.output - 0.1) < 1e-12)
     #expect(abs(request.total - 0.215) < 1e-12)
@@ -32,6 +32,34 @@ struct CostTests {
     #expect(abs(request.sentAgain - 2.1) < 1e-12)
     #expect(cost.context(through: 0) == request.context)
     #expect(cost.context(through: 7) == request.context)
+  }
+
+  @Test("writes are billed by lifetime, and an unsplit write at the five-minute price")
+  func writeLifetimes() {
+    let model = ["claude-fable-5-1"]
+    let fiveMinute = RequestUsage(cacheCreationTokens: 1_000_000, ephemeral5mTokens: 1_000_000)
+    let mixed = RequestUsage(
+      cacheCreationTokens: 1_000_000, ephemeral1hTokens: 250_000, ephemeral5mTokens: 750_000)
+    let unsplit = RequestUsage(cacheCreationTokens: 1_000_000)
+    #expect(CostAnalyzer.run(Self.lane([fiveMinute], models: model)).perRequest[0].context == 12.5)
+    #expect(CostAnalyzer.run(Self.lane([mixed], models: model)).perRequest[0].context == 14.375)
+    #expect(CostAnalyzer.run(Self.lane([unsplit], models: model)).perRequest[0].context == 12.5)
+    #expect(!CostAnalyzer.run(Self.lane([fiveMinute], models: model)).perRequest[0].writesOneHour)
+  }
+
+  @Test("the standard table prices each current model and bills an unknown one as Fable 5.1")
+  func standardTable() {
+    let table = PriceTable.standard
+    #expect(table.prices(for: "claude-opus-5-5[1m]").cacheRead == 0.20)
+    #expect(table.prices(for: "claude-opus-5").cacheRead == 0.50)
+    #expect(table.prices(for: "claude-fable-5-1").cacheRead == 0.25)
+    #expect(table.prices(for: "claude-fable-5").cacheRead == 1)
+    #expect(table.prices(for: "claude-sonnet-5-5").input == 2)
+    #expect(table.prices(for: "claude-sonnet-4-6").input == 3)
+    #expect(table.prices(for: "claude-haiku-4-5-20251001").output == 5)
+    #expect(table.prices(for: "claude-opus-4-20250514").input == 15)
+    #expect(table.prices(for: "synthetic") == table.fallback)
+    #expect(table.fallback == table.prices(for: "claude-fable-5-1"))
   }
 
   @Test("an empty lane costs nothing and answers every question with zero")
@@ -72,8 +100,8 @@ struct CostTests {
 
   @Test("the longest matching prefix decides a model's prices")
   func priceTable() {
-    let cheap = Prices(cacheWrite: 2, cacheRead: 0.1, input: 1, output: 5)
-    let narrow = Prices(cacheWrite: 4, cacheRead: 0.2, input: 2, output: 10)
+    let cheap = Prices(cacheWrite5m: 1.25, cacheWrite1h: 2, cacheRead: 0.1, input: 1, output: 5)
+    let narrow = Prices(cacheWrite5m: 2.5, cacheWrite1h: 4, cacheRead: 0.2, input: 2, output: 10)
     let table = PriceTable(
       entries: [
         PriceTable.Entry(modelPrefix: "claude-x-1", prices: narrow),

@@ -16,7 +16,8 @@ struct BlockCostTests {
   private static func snapshot(_ index: Int, read: Int, written: Int) -> Snapshot {
     Snapshot(
       index: index, requestID: nil, timestamp: Double(index), model: "m",
-      usage: RequestUsage(cacheReadTokens: read, cacheCreationTokens: written))
+      usage: RequestUsage(
+        cacheReadTokens: read, cacheCreationTokens: written, ephemeral1hTokens: written))
   }
 
   private static let broken = Lane(

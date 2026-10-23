@@ -91,10 +91,13 @@ or more (cache expired), otherwise unknown.
 
 ## Known limitations
 
-- **Prices.** Every model is billed with one default table (cache write 20,
-  cache read 0.25, input 10, output 50 dollars per million tokens), and there
-  is one cache write price where the API bills five-minute and one-hour writes
-  differently. Per-model prices go in `ScopeCore/Prices.swift`.
+- **Prices** are Anthropic's list prices per million tokens as published on
+  2026-10-23, matched by model id prefix in `ScopeCore/Prices.swift`, with
+  five-minute and one-hour cache writes billed at their own rates. A model the
+  table does not know is billed as Claude Fable 5.1, the most expensive current
+  model. Claude Haiku 5.5 is billed at its rate for prompts up to 100,000
+  tokens, and the API charges five times that above. Per-block cents are an
+  allocation of a request's bill by block size, not a separate charge.
 - **Cache break causes are inferred** from the transcript. A memory file or a
   tool loaded mid-session can happen to enter at a request that broke for
   another reason, and is then named as the cause.

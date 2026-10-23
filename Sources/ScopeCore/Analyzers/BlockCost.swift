@@ -53,7 +53,8 @@ public enum BlockCostAnalyzer {
       readSum[index] = running
     }
     func extra(at index: Int) -> Double {
-      costs.perRequest[index].prices.rewriteExtra(1)
+      let request = costs.perRequest[index]
+      return request.prices.rewriteExtra(1, oneHour: request.writesOneHour)
     }
 
     var rewrittenAt: [SegmentID: [Int]] = [:]
