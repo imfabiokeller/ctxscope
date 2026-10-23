@@ -37,8 +37,24 @@ public struct CacheAnalysis: Sendable, Codable {
 }
 
 public enum CacheAnalyzer {
-  /// The 5 minute cache entry lifetime, with room to spare.
+  /// The API's two cache lifetimes. A pause can only have expired the cache if it was
+  /// longer than the lifetime the parent request wrote at.
   public static let idleSeconds: Double = 300
+  public static let idleSecondsOneHour: Double = 3600
+
+  /// The lifetime in force before a request: one hour when the nearest earlier request
+  /// that wrote to the cache wrote one-hour entries, else five minutes.
+  public static func lifetime(before index: Int, in lane: Lane) -> Double {
+    var cursor = index
+    while cursor >= 0 {
+      let usage = lane.snapshots[cursor].usage
+      if usage.cacheCreationTokens > 0 {
+        return usage.ephemeral1hTokens > usage.ephemeral5mTokens ? idleSecondsOneHour : idleSeconds
+      }
+      cursor -= 1
+    }
+    return idleSeconds
+  }
 
   public static func run(_ lane: Lane) -> CacheAnalysis {
     var states: [CacheState] = []
@@ -82,7 +98,8 @@ public enum CacheAnalyzer {
             parentIndex: parentIndex,
             compactionAt: compactionAt,
             switchedAt: switchedAt,
-            change: change
+            change: change,
+            lifetime: lifetime(before: parentIndex, in: lane)
           ),
           parentRequest: parentIndex,
           gapSeconds: snapshot.timestamp - parent.timestamp,
@@ -105,7 +122,8 @@ public enum CacheAnalyzer {
     parentIndex: Int,
     compactionAt: Set<Int>,
     switchedAt: Set<Int>,
-    change: PrefixChange?
+    change: PrefixChange?,
+    lifetime: Double
   ) -> CacheBustCause {
     if compactionAt.contains(snapshot.index) { return .compaction }
     if switchedAt.contains(snapshot.index) || snapshot.model != parent.model {
@@ -121,7 +139,7 @@ public enum CacheAnalyzer {
     default: break
     }
     let gap = snapshot.timestamp - parent.timestamp
-    if gap >= idleSeconds { return .idle }
+    if gap >= lifetime { return .idle }
     return .unknown
   }
 }

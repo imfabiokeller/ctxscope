@@ -86,8 +86,10 @@ A cache break is a request whose cache read fell below what the request it
 continued from had cached. The size is exact. The cause is inferred, in this
 order: a compaction, a model switch, a rewind or edited prompt, a changed
 system prompt, tool definitions or memory file (the first prefix block in
-reading order that entered or left at that request), a pause of five minutes
-or more (cache expired), otherwise unknown.
+reading order that entered or left at that request), a pause longer than the
+cache lifetime in force (one hour when the last request that wrote to the
+cache wrote one-hour entries, which a Claude subscription gives the main
+conversation, else five minutes), otherwise unknown.
 
 ## Known limitations
 
