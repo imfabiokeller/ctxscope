@@ -15,9 +15,10 @@ context window of a coding agent.
 Every request Claude Code sends carries the whole context: the system prompt,
 the tool definitions, your memory files, every prompt, every file the agent
 read, every command it ran, every thought. It grows with each step, it is sent
-again on every request, and you pay for it every time. Almost nobody can see
-it. ctxscope makes it visible, block by block, request by request, down to the
-cent.
+again on every request, and you pay for it every time. The harness shows you a
+snapshot of it. ctxscope shows every request, block by block, with how long
+each block has been carried, whether the agent ever used it again, and what
+carrying it has cost.
 
 ![The Context page: four figures, the context in reading order as one slice per block, and every block in a table](docs/images/context-light.png)
 
@@ -130,8 +131,9 @@ sends no telemetry. Everything stays on your Mac.
 - **Honest where it cannot.** A single block's size is estimated from its text
   and carries a `~`. The estimates are normalized so they always add up to the
   measured total.
-- **Prices** are a table per model. Right now every model uses one default
-  table (see [known limitations](docs/HOW_IT_MEASURES.md#known-limitations)).
+- **Prices** are Anthropic's list prices per model, with five-minute and
+  one-hour cache writes at their own rates (see
+  [known limitations](docs/HOW_IT_MEASURES.md#known-limitations)).
 
 There is also a command line for the curious:
 
