@@ -15,7 +15,7 @@ rm -rf "$app"
 mkdir -p "$contents/MacOS" "$contents/Resources"
 cp "$binary/ctxscope" "$contents/MacOS/ctxscope"
 
-# Bundle.module looks for the theme resource bundles in Contents/Resources.
+# ThemeLoader looks for the theme resource bundle in Contents/Resources.
 for bundle in "$binary"/*.bundle; do
   [ -e "$bundle" ] || continue
   cp -R "$bundle" "$contents/Resources/"
