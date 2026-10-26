@@ -7,6 +7,7 @@ import ScopeUI
 @MainActor
 enum Diagnostics {
   static let appearanceFlag = "--print-appearance"
+  static let themesFlag = "--print-themes"
   static let statusFlag = "--print-status"
   // Takes an optional output file: an app launched by Launch Services, which URLs need,
   // has no readable standard error.
@@ -15,6 +16,7 @@ enum Diagnostics {
 
   static func runIfAsked() {
     if CommandLine.arguments.contains(appearanceFlag) { return printAppearance() }
+    if CommandLine.arguments.contains(themesFlag) { return printThemes() }
   }
 
   // Prints event kinds and session ids only, never transcript text.
@@ -85,6 +87,11 @@ enum Diagnostics {
       !arguments[slot + 1].hasPrefix("--")
     else { return nil }
     return URL(fileURLWithPath: arguments[slot + 1])
+  }
+
+  private static func printThemes() {
+    print(ThemeLoader.bundled().map(\.name).joined(separator: " "))
+    exit(0)
   }
 
   private static func printAppearance() {

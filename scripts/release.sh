@@ -19,6 +19,22 @@ fi
 # bundle.sh ignores signing failures, so a broken signature is caught here.
 codesign --verify --strict "$app"
 
+# Started from a copy with the build folder out of the way: the themes must come
+# from the bundle, not from the folder it was built in.
+aside=".build.aside"
+mv .build "$aside"
+trap 'mv "$aside" .build' EXIT
+copy="$(mktemp -d)/ctxscope.app"
+ditto "$app" "$copy"
+if ! themes="$("$copy/Contents/MacOS/ctxscope" --print-themes 2>&1)"; then
+  echo "error: the bundle does not start on its own: $themes" >&2
+  exit 1
+fi
+rm -rf "$(dirname "$copy")"
+mv "$aside" .build
+trap - EXIT
+echo "themes $themes"
+
 zip="ctxscope-$version.zip"
 rm -f "build/$zip" "build/$zip.sha256"
 ditto -c -k --keepParent "$app" "build/$zip"

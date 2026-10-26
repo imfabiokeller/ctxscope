@@ -130,9 +130,11 @@ passes `validate`. `DemoTests` reads it back through the adapter and checks it.
 1. Set `CFBundleShortVersionString` (and bump `CFBundleVersion`) in
    `scripts/bundle.sh` and commit.
 2. Rehearse locally: `scripts/release.sh 0.2` bundles, fails unless the bundle
-   says 0.2, verifies the signature, and writes `build/ctxscope-0.2.zip`, its
-   `.sha256` and `build/release-notes.md` (install notes plus the commits since
-   the previous tag).
+   says 0.2, verifies the signature, starts a copy of the bundle once with the
+   build folder out of the way (`--print-themes`, so the themes must come from
+   the bundle itself), and writes `build/ctxscope-0.2.zip`, its `.sha256` and
+   `build/release-notes.md` (install notes plus the commits since the previous
+   tag).
 3. Tag and push: `git tag v0.2 && git push origin v0.2`.
    `.github/workflows/release.yml` runs the same script on a `macos-26` runner
    and creates the GitHub release with the zip, the checksum and the notes.
