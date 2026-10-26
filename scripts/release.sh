@@ -36,9 +36,11 @@ trap - EXIT
 echo "themes $themes"
 
 zip="ctxscope-$version.zip"
-rm -f "build/$zip" "build/$zip.sha256"
+rm -f "build/$zip" "build/$zip.sha256" build/ctxscope.zip
 ditto -c -k --keepParent "$app" "build/$zip"
 (cd build && shasum -a 256 "$zip" > "$zip.sha256")
+# The same bytes under a name that never changes, for releases/latest/download.
+cp "build/$zip" build/ctxscope.zip
 
 notes="build/release-notes.md"
 previous="$(git describe --tags --abbrev=0 --match 'v*' HEAD^ 2>/dev/null || true)"
@@ -59,4 +61,4 @@ previous="$(git describe --tags --abbrev=0 --match 'v*' HEAD^ 2>/dev/null || tru
 
 echo "version $version"
 cat "build/$zip.sha256"
-echo "wrote build/$zip, build/$zip.sha256 and $notes"
+echo "wrote build/$zip, build/$zip.sha256, build/ctxscope.zip and $notes"

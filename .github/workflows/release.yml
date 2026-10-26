@@ -32,4 +32,5 @@ jobs:
             --title "ctxscope $version" \
             --notes-file build/release-notes.md \
             "build/ctxscope-$version.zip" \
-            "build/ctxscope-$version.zip.sha256"
+            "build/ctxscope-$version.zip.sha256" \
+            build/ctxscope.zip
