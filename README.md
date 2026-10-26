@@ -84,13 +84,19 @@ silicon, and [Claude Code](https://claude.com/claude-code).
 1. Get `ctxscope-<version>.zip` from the
    [latest release](https://github.com/imfabiokeller/ctxscope/releases/latest),
    unzip it and move `ctxscope.app` to Applications.
-2. Open it. macOS blocks it the first time, because the app is not notarized
-   yet. Open **System Settings > Privacy & Security**, scroll down, and click
-   **Open Anyway**. You only do this once. Or, before the first launch:
+2. Open it. The first time, macOS says it could not verify that ctxscope is
+   free of malware, because the app is not notarized yet. Click **Done** (not
+   Move to Trash), open **System Settings > Privacy & Security**, scroll down
+   to the line about ctxscope, click **Open Anyway**, confirm with your
+   password or Touch ID, and open the app again. You only do this once. Or
+   clear the flag before the first launch instead:
 
    ```bash
    xattr -dr com.apple.quarantine /Applications/ctxscope.app
    ```
+
+3. Look at the menu bar: ctxscope runs there, as a small meter next to the
+   clock, with no Dock icon and no window until you click it.
 
 Each release also carries a SHA-256 file; `shasum -a 256 -c
 ctxscope-<version>.zip.sha256` checks the download.
@@ -106,7 +112,8 @@ scripts/bundle.sh
 open build/ctxscope.app
 ```
 
-An app you built on your own Mac opens without any warning.
+An app you built on your own Mac opens without any warning, and
+`build/ctxscope.app` can be moved to Applications like the downloaded one.
 
 ## Plug it in
 
@@ -114,8 +121,8 @@ An app you built on your own Mac opens without any warning.
    change it will make to `~/.claude/settings.json` before writing anything: two
    small hook entries and a `/ctxscope` skill. **Disconnect** takes them out
    again, byte for byte.
-2. In any Claude Code chat, type `/ctxscope`. The window opens on that session
-   and follows it live.
+2. In a Claude Code chat started after that, type `/ctxscope`. The window
+   opens on that session and follows it live.
 
 You can also pick any recent session from the menu bar or the window's session
 menu. Nothing needs to be connected to look at past sessions.
@@ -131,8 +138,8 @@ sends no telemetry. Everything stays on your Mac.
 - **Honest where it cannot.** A single block's size is estimated from its text
   and carries a `~`. The estimates are normalized so they always add up to the
   measured total.
-- **Prices** are Anthropic's list prices per model, with five-minute and
-  one-hour cache writes at their own rates (see
+- **Prices** are Anthropic's list prices per model, whatever plan you are
+  on, with five-minute and one-hour cache writes at their own rates (see
   [known limitations](docs/HOW_IT_MEASURES.md#known-limitations)).
 
 There is also a command line for the curious:
