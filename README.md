@@ -74,32 +74,67 @@ flattens it, a tool result lands like a kick drum.
 A tiny meter with the current context size. Click it for the numbers, the last
 cache break, and the session's shape at a glance.
 
-## Install
+## Getting started
 
 ctxscope is a native macOS app. It needs **macOS 15 or later** on Apple
 silicon, and [Claude Code](https://claude.com/claude-code).
 
-### Download
+### 1. Install
 
-1. Get `ctxscope-<version>.zip` from the
-   [latest release](https://github.com/imfabiokeller/ctxscope/releases/latest),
-   unzip it and move `ctxscope.app` to Applications.
-2. Open it. The first time, macOS says it could not verify that ctxscope is
-   free of malware, because the app is not notarized yet. Click **Done** (not
-   Move to Trash), open **System Settings > Privacy & Security**, scroll down
-   to the line about ctxscope, click **Open Anyway**, confirm with your
-   password or Touch ID, and open the app again. You only do this once. Or
-   clear the flag before the first launch instead:
+One command puts the latest release into Applications and opens it:
 
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/ctxscope.app
-   ```
+```bash
+curl -fsSL https://github.com/imfabiokeller/ctxscope/releases/latest/download/ctxscope.zip -o /tmp/ctxscope.zip && ditto -x -k /tmp/ctxscope.zip /Applications && open /Applications/ctxscope.app
+```
 
-3. Look at the menu bar: ctxscope runs there, as a small meter next to the
-   clock, with no Dock icon and no window until you click it.
+Look at the menu bar: ctxscope runs there, as a small meter next to the
+clock, with no Dock icon and no window until you click it.
+
+The app is not notarized yet. A zip that `curl` fetched carries no quarantine
+flag, so macOS opens it without asking. If you download
+`ctxscope-<version>.zip` from the
+[latest release](https://github.com/imfabiokeller/ctxscope/releases/latest)
+in the browser instead, macOS says the first time that it could not verify
+that ctxscope is free of malware. Click **Done** (not Move to Trash), open
+**System Settings > Privacy & Security**, scroll down to the line about
+ctxscope, click **Open Anyway**, confirm with your password or Touch ID, and
+open the app again. You only do this once. Or clear the flag before the first
+launch instead:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ctxscope.app
+```
 
 Each release also carries a SHA-256 file; `shasum -a 256 -c
 ctxscope-<version>.zip.sha256` checks the download.
+
+### 2. Connect it to Claude Code
+
+Click the menu bar meter, then **… > Connect**. ctxscope shows you the exact
+change before writing anything: two small hook entries in
+`~/.claude/settings.json`, so that Claude Code tells ctxscope when a session
+starts and ends, and a `/ctxscope` skill in `~/.claude/skills/ctxscope`.
+**Disconnect** takes both out again, byte for byte.
+
+The skill runs a single command, `open ctxscope://...`, and carries its own
+`allowed-tools` line for it. If your Claude Code still asks before running
+it, add this permission to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(open ctxscope:*)"]
+  }
+}
+```
+
+### 3. Open a session
+
+In a Claude Code chat started after connecting, type `/ctxscope`. The window
+opens on that session and follows it live.
+
+You can also pick any recent session from the menu bar or the window's session
+menu. Nothing needs to be connected to look at past sessions.
 
 ### Build it yourself
 
@@ -114,18 +149,8 @@ open build/ctxscope.app
 
 An app you built on your own Mac opens without any warning, and
 `build/ctxscope.app` can be moved to Applications like the downloaded one.
-
-## Plug it in
-
-1. Click the menu bar meter, then **… > Connect**. ctxscope shows you the exact
-   change it will make to `~/.claude/settings.json` before writing anything: two
-   small hook entries and a `/ctxscope` skill. **Disconnect** takes them out
-   again, byte for byte.
-2. In a Claude Code chat started after that, type `/ctxscope`. The window
-   opens on that session and follows it live.
-
-You can also pick any recent session from the menu bar or the window's session
-menu. Nothing needs to be connected to look at past sessions.
+`swift build --product ctxscope-cli` also gives you `ctxscope-cli connect`,
+`disconnect` and `doctor` for the same change from the terminal.
 
 ## How it works
 
