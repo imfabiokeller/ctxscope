@@ -98,7 +98,8 @@ public struct ContextSidebar: View {
             .font(theme.type.captionStrong)
             .foregroundStyle(theme.text.primary.color)
             .line(theme.type.lines.caption)
-          CodeBlock(text)
+          // The sidebar scrolls, so the whole text is readable.
+          CodeBlock(text, height: .full)
         }
       }
       HStack(spacing: theme.metrics.control.buttonGap) {

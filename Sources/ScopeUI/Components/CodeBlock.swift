@@ -2,8 +2,12 @@ public import SwiftUI
 
 public struct CodeBlock: View {
   public enum Height: Sendable {
+    /// Clipped at the theme's code height, for a preview.
     case capped
+    /// Scrolls inside its own frame.
     case filling
+    /// As tall as the text, for a block inside a scrolling column.
+    case full
   }
 
   private let text: String
